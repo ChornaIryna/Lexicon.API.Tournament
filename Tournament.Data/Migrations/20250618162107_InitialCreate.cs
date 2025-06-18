@@ -33,8 +33,7 @@ namespace Tournament.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Time = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    TournamentId = table.Column<int>(type: "int", nullable: false),
-                    TournamentDetailsId = table.Column<int>(type: "int", nullable: true)
+                    TournamentDetailsId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -43,7 +42,8 @@ namespace Tournament.Data.Migrations
                         name: "FK_Games_TournamentDetails_TournamentDetailsId",
                         column: x => x.TournamentDetailsId,
                         principalTable: "TournamentDetails",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(

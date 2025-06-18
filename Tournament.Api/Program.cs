@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Negotiate;
 using Microsoft.EntityFrameworkCore;
+using Tournament.Api.Extensions;
 using Tournament.Data.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +28,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    await app.SeedDataAsync();
 }
 
 app.UseHttpsRedirection();

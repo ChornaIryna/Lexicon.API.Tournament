@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Tournament.Core.Entities;
 using Tournament.Data.Data;
 
 namespace Tournament.Api.Controllers;
-
+[AllowAnonymous] // Allow anonymous access to the API for demonstration purposes; adjust as needed for security.
 [Route("api/[controller]")]
 [ApiController]
 public class TournamentsController : ControllerBase
@@ -20,7 +21,7 @@ public class TournamentsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TournamentDetails>>> GetTournamentDetails()
     {
-        return await _context.TournamentDetails.ToListAsync();
+        return await _context.TournamentDetails.Include(t => t.Games).ToListAsync();
     }
 
     // GET: api/Tournaments/5

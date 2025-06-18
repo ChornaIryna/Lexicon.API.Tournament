@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Tournament.Core.Entities;
 using Tournament.Data.Data;
 
 namespace Tournament.Api.Controllers;
-
+[AllowAnonymous]
 [Route("api/[controller]")]
 [ApiController]
 public class GamesController : ControllerBase
