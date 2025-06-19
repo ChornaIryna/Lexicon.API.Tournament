@@ -22,7 +22,7 @@ namespace Tournament.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Tournament.Core.Entities.Games", b =>
+            modelBuilder.Entity("Tournament.Core.Entities.Game", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -67,7 +67,7 @@ namespace Tournament.Data.Migrations
                     b.ToTable("TournamentDetails");
                 });
 
-            modelBuilder.Entity("Tournament.Core.Entities.Games", b =>
+            modelBuilder.Entity("Tournament.Core.Entities.Game", b =>
                 {
                     b.HasOne("Tournament.Core.Entities.TournamentDetails", null)
                         .WithMany("Games")

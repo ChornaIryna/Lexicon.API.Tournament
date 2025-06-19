@@ -1,6 +1,6 @@
 ﻿namespace Tournament.Core.Entities;
 
-public class Games
+public class Game
 {
     public int Id { get; set; }
     public required string Title { get; set; }

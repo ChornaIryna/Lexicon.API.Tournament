@@ -17,16 +17,16 @@ public class GamesController : ControllerBase
         _context = context;
     }
 
-    // GET: api/Games
+    // GET: api/Game
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Games>>> GetGames()
+    public async Task<ActionResult<IEnumerable<Game>>> GetGames()
     {
         return await _context.Games.ToListAsync();
     }
 
-    // GET: api/Games/5
+    // GET: api/Game/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Games>> GetGames(int id)
+    public async Task<ActionResult<Game>> GetGames(int id)
     {
         var games = await _context.Games.FindAsync(id);
 
@@ -38,10 +38,10 @@ public class GamesController : ControllerBase
         return games;
     }
 
-    // PUT: api/Games/5
+    // PUT: api/Game/5
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutGames(int id, Games games)
+    public async Task<IActionResult> PutGames(int id, Game games)
     {
         if (id != games.Id)
         {
@@ -69,10 +69,10 @@ public class GamesController : ControllerBase
         return NoContent();
     }
 
-    // POST: api/Games
+    // POST: api/Game
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
-    public async Task<ActionResult<Games>> PostGames(Games games)
+    public async Task<ActionResult<Game>> PostGames(Game games)
     {
         _context.Games.Add(games);
         await _context.SaveChangesAsync();
@@ -80,7 +80,7 @@ public class GamesController : ControllerBase
         return CreatedAtAction("GetGames", new { id = games.Id }, games);
     }
 
-    // DELETE: api/Games/5
+    // DELETE: api/Game/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteGames(int id)
     {

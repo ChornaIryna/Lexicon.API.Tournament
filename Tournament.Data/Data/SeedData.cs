@@ -30,7 +30,7 @@ public class SeedData<T>(TournamentContext context) where T : class
                 StartDate = DateTime.UtcNow.AddDays(index)
             } as T;
         }
-        if (typeof(T) == typeof(Games))
+        if (typeof(T) == typeof(Game))
         {
             // Ensure there is at least one TournamentDetails to reference
             var tournamentIds = context.TournamentDetails.Select(td => td.Id).ToList();
@@ -48,7 +48,7 @@ public class SeedData<T>(TournamentContext context) where T : class
 
             var randomTournamentId = tournamentIds[Random.Shared.Next(tournamentIds.Count)];
 
-            return new Games
+            return new Game
             {
                 Title = $"Game {index + 1}",
                 Time = DateTime.UtcNow.AddDays(randomTournamentId - 1).AddHours(index),

@@ -12,7 +12,7 @@ using Tournament.Data.Data;
 namespace Tournament.Data.Migrations
 {
     [DbContext(typeof(TournamentContext))]
-    [Migration("20250618162107_InitialCreate")]
+    [Migration("20250619095551_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -25,7 +25,7 @@ namespace Tournament.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Tournament.Core.Entities.Games", b =>
+            modelBuilder.Entity("Tournament.Core.Entities.Game", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -70,7 +70,7 @@ namespace Tournament.Data.Migrations
                     b.ToTable("TournamentDetails");
                 });
 
-            modelBuilder.Entity("Tournament.Core.Entities.Games", b =>
+            modelBuilder.Entity("Tournament.Core.Entities.Game", b =>
                 {
                     b.HasOne("Tournament.Core.Entities.TournamentDetails", null)
                         .WithMany("Games")

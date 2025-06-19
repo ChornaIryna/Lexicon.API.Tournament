@@ -15,10 +15,10 @@ public static class ApplicationBuilderExtensions
 
         if (!context.Games.Any())
         {
-            // Ensure TournamentDetails exist before seeding Games
+            // Ensure TournamentDetails exist before seeding Game
             if (!context.TournamentDetails.Any())
                 await new SeedData<TournamentDetails>(context).GenerateDataAsync(3);
-            await new SeedData<Games>(context).GenerateDataAsync(7);
+            await new SeedData<Game>(context).GenerateDataAsync(7);
         }
     }
 }

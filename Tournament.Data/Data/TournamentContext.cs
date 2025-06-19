@@ -11,5 +11,5 @@ public class TournamentContext : DbContext
     }
 
     public DbSet<TournamentDetails> TournamentDetails { get; set; } = default!;
-    public DbSet<Games> Games { get; set; } = default!;
+    public DbSet<Game> Games { get; set; } = default!;
 }
