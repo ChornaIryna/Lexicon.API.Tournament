@@ -10,10 +10,18 @@ public class TournamentMappings : Profile
         CreateMap<TournamentDto, TournamentDetails>()
             .ForMember(target => target.Games, config => config.AllowNull())
             .ReverseMap();
+        CreateMap<TournamentCreateDto, TournamentDetails>()
+            .ForMember(target => target.Games, config => config.AllowNull())
+            .ReverseMap();
+        CreateMap<TournamentEditDto, TournamentDetails>()
+            .ForMember(target => target.Games, config => config.AllowNull())
+            .ReverseMap();
+
         CreateMap<GameDto, Game>()
             .ReverseMap();
-        CreateMap<EditTournamentDto, TournamentDetails>()
-            .ForMember(target => target.Games, config => config.Ignore())
+        CreateMap<GameCreateDto, Game>()
+            .ReverseMap();
+        CreateMap<GameEditDto, Game>()
             .ReverseMap();
     }
 }

@@ -17,6 +17,16 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(TournamentMappings));
 builder.Services.AddScoped<IUoW, UoW>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
    .AddNegotiate();
 
@@ -33,6 +43,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     await app.SeedDataAsync();
+    app.UseCors();
 }
 
 app.UseHttpsRedirection();

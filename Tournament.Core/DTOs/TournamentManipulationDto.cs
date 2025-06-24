@@ -1,5 +1,5 @@
 ﻿namespace Tournament.Core.DTOs;
-public record EditTournamentDto
+public record TournamentManipulationDto
 {
     public required string Title { get; init; }
 
