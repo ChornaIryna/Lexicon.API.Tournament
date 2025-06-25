@@ -20,5 +20,4 @@ public record TournamentDto
         get => _endDate;
         set => _endDate = value;
     }
-    public IEnumerable<GameDto>? Games { get; set; }
 }

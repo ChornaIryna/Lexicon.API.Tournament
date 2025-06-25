@@ -8,6 +8,8 @@ public class TournamentMappings : Profile
     public TournamentMappings()
     {
         CreateMap<TournamentDto, TournamentDetails>()
+            .ReverseMap();
+        CreateMap<TournamentWithGamesDto, TournamentDetails>()
             .ForMember(target => target.Games, config => config.AllowNull())
             .ReverseMap();
         CreateMap<TournamentCreateDto, TournamentDetails>()

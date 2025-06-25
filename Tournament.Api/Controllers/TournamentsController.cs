@@ -23,12 +23,12 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         {
             return NotFound("No tournaments found.");
         }
-        var tournamentsDto = mapper.Map<IEnumerable<TournamentDto>>(tournaments);
+        var tournamentsDto = includeGames ? mapper.Map<IEnumerable<TournamentWithGamesDto>>(tournaments) : mapper.Map<IEnumerable<TournamentDto>>(tournaments);
         return Ok(tournamentsDto);
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<TournamentDto>> GetTournamentDetails(int id)
+    public async Task<ActionResult<TournamentDto>> GetTournamentDetails(int id, bool includeGames = false)
     {
         var tournamentDetails = await unitOfWork.TournamentRepository.GetTournamentByIdAsync(id);
 
@@ -36,7 +36,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         {
             return NotFound($"Tournament with Id '{id}' was not found.");
         }
-        var tournamentDto = mapper.Map<TournamentDto>(tournamentDetails);
+        var tournamentDto = includeGames ? mapper.Map<TournamentWithGamesDto>(tournamentDetails) : mapper.Map<TournamentDto>(tournamentDetails);
         return Ok(tournamentDto);
     }
 
@@ -61,8 +61,8 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         {
             foreach (var validationResult in validationResults)
             {
-                ModelState.AddModelError(validationResult.MemberNames.FirstOrDefault()
-                    ?? string.Empty, validationResult.ErrorMessage);
+                var errorMessage = validationResult.ErrorMessage ?? "Unknown validation error.";
+                ModelState.AddModelError(validationResult.MemberNames.FirstOrDefault() ?? string.Empty, errorMessage);
             }
             return BadRequest(ModelState);
         }
@@ -97,8 +97,8 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         {
             foreach (var validationResult in validationResults)
             {
-                ModelState.AddModelError(validationResult.MemberNames.FirstOrDefault()
-                    ?? string.Empty, validationResult.ErrorMessage);
+                var errorMessage = validationResult.ErrorMessage ?? "Unknown validation error.";
+                ModelState.AddModelError(validationResult.MemberNames.FirstOrDefault() ?? string.Empty, errorMessage);
             }
             return BadRequest(ModelState);
         }
