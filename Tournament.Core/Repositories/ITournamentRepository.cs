@@ -1,12 +1,7 @@
 ﻿using Tournament.Core.Entities;
 
 namespace Tournament.Core.Repositories;
-public interface ITournamentRepository
+public interface ITournamentRepository : IRepository<TournamentDetails>
 {
-    Task<IEnumerable<TournamentDetails>> GetAllTournamentsAsync(bool includeGames);
-    Task<TournamentDetails?> GetTournamentByIdAsync(int id);
-    Task<bool> AnyAsync(int id);
-    void Add(TournamentDetails tournamentDetails);
-    void Update(TournamentDetails tournamentDetails);
-    void Remove(TournamentDetails tournamentDetails);
+    Task<IEnumerable<TournamentDetails>> GetAllAsync(bool includeGames = false);
 }

@@ -4,15 +4,11 @@ using Tournament.Core.Repositories;
 using Tournament.Data.Data;
 
 namespace Tournament.Data.Repositories;
-public class TournamentRepository(TournamentContext context) : ITournamentRepository
+public class TournamentRepository(TournamentContext tournamentContext) : BaseRepository<TournamentDetails>(tournamentContext), ITournamentRepository
 {
-    public void Add(TournamentDetails tournamentDetails) => context.Add(tournamentDetails);
-    public async Task<bool> AnyAsync(int id) => await context.TournamentDetails.AnyAsync(t => t.Id == id);
-    public async Task<IEnumerable<TournamentDetails>> GetAllTournamentsAsync(bool includeGames) =>
-       includeGames ? await context.TournamentDetails.Include(t => t.Games).ToListAsync()
-                     : await context.TournamentDetails.ToListAsync();
-    public async Task<TournamentDetails?> GetTournamentByIdAsync(int id) =>
-        await context.TournamentDetails.Include(t => t.Games).FirstOrDefaultAsync(t => t.Id == id);
-    public void Remove(TournamentDetails tournamentDetails) => context.Remove(tournamentDetails);
-    public void Update(TournamentDetails tournamentDetails) => context.Update(tournamentDetails);
+    public async Task<IEnumerable<TournamentDetails>> GetAllAsync(bool includeGames) =>
+       includeGames ? await tournamentContext.TournamentDetails.Include(t => t.Games).ToListAsync()
+                     : await tournamentContext.TournamentDetails.ToListAsync();
+    public override async Task<TournamentDetails?> GetByIdAsync(int id) =>
+        await tournamentContext.TournamentDetails.Include(t => t.Games).FirstOrDefaultAsync(t => t.Id == id);
 }

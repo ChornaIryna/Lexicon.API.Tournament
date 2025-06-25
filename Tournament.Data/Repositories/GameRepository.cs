@@ -4,13 +4,16 @@ using Tournament.Core.Repositories;
 using Tournament.Data.Data;
 
 namespace Tournament.Data.Repositories;
-public class GameRepository(TournamentContext context) : IGameRepository
+public class GameRepository(TournamentContext tournamentContext) : BaseRepository<Game>(tournamentContext), IGameRepository
 {
-    public void Add(Game game) => context.Games.Add(game);
-    public async Task<bool> AnyAsync(int id) => await GetGameByIdAsync(id) != null;
-    public async Task<IEnumerable<Game>> GetAllTournamentGamesAsync(int tournamentDetailsId) =>
-        await context.Games.Where(g => g.TournamentDetailsId == tournamentDetailsId).ToListAsync();
-    public async Task<Game?> GetGameByIdAsync(int id) => await context.Games.FindAsync(id);
-    public void Remove(Game game) => context.Remove(game);
-    public void Update(Game game) => context.Update(game);
+    public async Task<IEnumerable<Game>> GetGamesByTitleAsync(string title) =>
+        await tournamentContext.Games
+                               .Where(g => g.Title.Contains(title, StringComparison.CurrentCultureIgnoreCase))
+                               .ToListAsync();
+
+    public async Task<IEnumerable<Game>> GetAllAsync(int tournamentDetailsId) =>
+        await tournamentContext.Games
+                               .Where(g => g.TournamentDetailsId == tournamentDetailsId)
+                               .ToListAsync();
+
 }

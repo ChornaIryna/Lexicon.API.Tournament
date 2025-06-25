@@ -9,4 +9,5 @@ public class UoW(TournamentContext context) : IUoW
     public IGameRepository GameRepository => new GameRepository(context);
 
     public async Task CompleteAsync() => await context.SaveChangesAsync();
+    public bool HasChanges() => context.ChangeTracker.HasChanges();
 }

@@ -14,12 +14,33 @@ namespace Tournament.Api.Controllers;
 public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<GameDto>>> GetGames(int tournamentId)
+    public async Task<ActionResult<IEnumerable<GameDto>>> GetGames(int tournamentId, [FromQuery] QueryParameters queryParameters)
     {
-        var games = await unitOfWork.GameRepository.GetAllTournamentGamesAsync(tournamentId);
-        return (games != null && games.Any())
-            ? Ok(mapper.Map<IEnumerable<GameDto>>(games))
-            : NotFound("No games found for the specified tournament.");
+        if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
+            return NotFound($"Tournament with Id '{tournamentId}' was not found.");
+
+        var games = !string.IsNullOrEmpty(queryParameters.SearchTerm)
+            ? await unitOfWork.GameRepository.GetGamesByTitleAsync(queryParameters.SearchTerm)
+            : await unitOfWork.GameRepository.GetAllAsync(tournamentId);
+
+        if (games == null || !games.Any())
+            return NotFound("No games found for the specified tournament.");
+
+        if (!string.IsNullOrEmpty(queryParameters.OrderBy))
+        {
+            games = queryParameters.OrderBy.ToLower() switch
+            {
+                "title" => games.OrderBy(g => g.Title ?? string.Empty),
+                "time" => games.OrderBy(g => g.Time),
+                _ => games
+            };
+        }
+
+        var paginatedGames = games
+            .Skip((queryParameters.PageNumber - 1) * queryParameters.PageSize)
+            .Take(queryParameters.PageSize);
+
+        return Ok(mapper.Map<IEnumerable<GameDto>>(paginatedGames));
     }
 
     [HttpGet("{id}")]
@@ -27,9 +48,13 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
     {
         if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
             return NotFound($"Tournament with Id '{tournamentId}' was not found.");
-        var game = await unitOfWork.GameRepository.GetGameByIdAsync(id);
+
+        var game = await unitOfWork.GameRepository.GetByIdAsync(id);
         if (game == null)
             return NotFound($"Game with Id '{id}' was not found.");
+
+        if (game.TournamentDetailsId != tournamentId)
+            return BadRequest($"Game with id '{id}' does not belong to tournament with Id '{tournamentId}'.");
 
         return Ok(mapper.Map<GameDto>(game));
     }
@@ -46,7 +71,7 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         if (id != game.Id)
             return BadRequest("Game ID mismatch.");
 
-        var existingGame = await unitOfWork.GameRepository.GetGameByIdAsync(id);
+        var existingGame = await unitOfWork.GameRepository.GetByIdAsync(id);
         if (existingGame == null)
             return NotFound($"Game with id '{id}' does not exist.");
 
@@ -56,14 +81,19 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         mapper.Map(game, existingGame);
         try
         {
-            unitOfWork.GameRepository.Update(existingGame);
-            await unitOfWork.CompleteAsync();
+            if (unitOfWork.HasChanges())
+                await unitOfWork.CompleteAsync();
         }
         catch (DbUpdateConcurrencyException ex)
         {
             if (!await unitOfWork.GameRepository.AnyAsync(id))
                 return NotFound($"Game with id '{id}' does not exist.");
-            return Conflict(ex.Message);
+
+            return Conflict(new
+            {
+                Message = "Concurrency error occurred while updating the game.",
+                Details = ex.Message
+            });
         }
         catch (Exception ex)
         {
@@ -105,7 +135,7 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
             return NotFound($"Tournament with Id '{tournamentId}' was not found.");
 
-        var game = await unitOfWork.GameRepository.GetGameByIdAsync(id);
+        var game = await unitOfWork.GameRepository.GetByIdAsync(id);
         if (game == null)
             return NotFound($"Game with id '{id}' does not exist.");
 
@@ -121,14 +151,18 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         mapper.Map(gameToPatch, game);
         try
         {
-            unitOfWork.GameRepository.Update(game);
-            await unitOfWork.CompleteAsync();
+            if (unitOfWork.HasChanges())
+                await unitOfWork.CompleteAsync();
         }
         catch (DbUpdateConcurrencyException ex)
         {
             if (!await unitOfWork.GameRepository.AnyAsync(id))
                 return NotFound($"Game with id '{id}' does not exist.");
-            return Conflict(ex.Message);
+            return Conflict(new
+            {
+                Message = "Concurrency error occurred while updating the game.",
+                Details = ex.Message
+            });
         }
         catch (Exception ex)
         {
@@ -143,7 +177,7 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
             return NotFound($"Tournament with Id '{tournamentId}' was not found.");
 
-        var game = await unitOfWork.GameRepository.GetGameByIdAsync(id);
+        var game = await unitOfWork.GameRepository.GetByIdAsync(id);
         if (game == null)
             return NotFound($"Game with id '{id}' does not exist.");
 

@@ -16,26 +16,45 @@ namespace Tournament.Api.Controllers;
 public class TournamentsController(IMapper mapper, IUoW unitOfWork) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<TournamentDto>>> GetTournaments(bool includeGames = false)
+    public async Task<ActionResult<IEnumerable<TournamentDto>>> GetTournaments([FromQuery] QueryParameters queryParameters, [FromQuery] bool includeGames = false)
     {
-        var tournaments = await unitOfWork.TournamentRepository.GetAllTournamentsAsync(includeGames);
+        var tournaments = await unitOfWork.TournamentRepository.GetAllAsync(includeGames);
         if (tournaments == null || !tournaments.Any())
-        {
             return NotFound("No tournaments found.");
+
+        if (!string.IsNullOrEmpty(queryParameters.SearchTerm))
+            tournaments = tournaments.Where(t => t.Title.Contains(queryParameters.SearchTerm, StringComparison.CurrentCultureIgnoreCase));
+
+        if (!string.IsNullOrEmpty(queryParameters.OrderBy))
+        {
+            tournaments = queryParameters.OrderBy.ToLower() switch
+            {
+                "title" => tournaments.OrderBy(t => t.Title),
+                "startdate" => tournaments.OrderBy(t => t.StartDate),
+                _ => tournaments
+            };
         }
-        var tournamentsDto = includeGames ? mapper.Map<IEnumerable<TournamentWithGamesDto>>(tournaments) : mapper.Map<IEnumerable<TournamentDto>>(tournaments);
+
+        var paginatedTournaments = tournaments
+                                .Skip((queryParameters.PageNumber - 1) * queryParameters.PageSize)
+                                .Take(queryParameters.PageSize);
+
+
+
+        var tournamentsDto = includeGames
+                            ? mapper.Map<IEnumerable<TournamentWithGamesDto>>(paginatedTournaments)
+                            : mapper.Map<IEnumerable<TournamentDto>>(paginatedTournaments);
         return Ok(tournamentsDto);
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<TournamentDto>> GetTournamentDetails(int id, bool includeGames = false)
+    public async Task<ActionResult<TournamentDto>> GetTournamentDetails(int id, [FromQuery] bool includeGames = false)
     {
-        var tournamentDetails = await unitOfWork.TournamentRepository.GetTournamentByIdAsync(id);
+        var tournamentDetails = await unitOfWork.TournamentRepository.GetByIdAsync(id);
 
         if (tournamentDetails == null)
-        {
             return NotFound($"Tournament with Id '{id}' was not found.");
-        }
+
         var tournamentDto = includeGames ? mapper.Map<TournamentWithGamesDto>(tournamentDetails) : mapper.Map<TournamentDto>(tournamentDetails);
         return Ok(tournamentDto);
     }
@@ -50,7 +69,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
             && !await unitOfWork.TournamentRepository.AnyAsync(id))
             return BadRequest();
 
-        var tournamentDetails = await unitOfWork.TournamentRepository.GetTournamentByIdAsync(id);
+        var tournamentDetails = await unitOfWork.TournamentRepository.GetByIdAsync(id);
         if (tournamentDetails == null)
             return NotFound($"Tournament with id '{id}' was not found");
         mapper.Map(tournamentDto, tournamentDetails);
@@ -69,18 +88,22 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
 
         try
         {
-            unitOfWork.TournamentRepository.Update(tournamentDetails);
-            await unitOfWork.CompleteAsync();
+            if (unitOfWork.HasChanges())
+                await unitOfWork.CompleteAsync();
         }
         catch (DbUpdateConcurrencyException ex)
         {
             if (!await unitOfWork.TournamentRepository.AnyAsync(id))
                 return NotFound($"Tournament with id '{id}' was not found");
-            return Conflict(ex.Message);
+            return Conflict(new
+            {
+                Message = "The tournament you are trying to update has been modified by another user. Please reload the tournament and try again.",
+                Details = ex.Message
+            });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, $"Failed to update tournament. Error: {ex.Message}");
         }
 
         return NoContent();
@@ -108,10 +131,6 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         {
             await unitOfWork.CompleteAsync();
         }
-        catch (DbUpdateException ex)
-        {
-            return BadRequest(ex.Message);
-        }
         catch (Exception ex)
         {
             return StatusCode(500, ex.Message);
@@ -127,7 +146,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         if (patchDoc == null)
             return BadRequest("Patch document cannot be null.");
 
-        var tournamentDetails = await unitOfWork.TournamentRepository.GetTournamentByIdAsync(id);
+        var tournamentDetails = await unitOfWork.TournamentRepository.GetByIdAsync(id);
         if (tournamentDetails == null)
             return NotFound($"Tournament with id '{id}' was not found");
 
@@ -140,13 +159,18 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         mapper.Map(tournamentEditDto, tournamentDetails);
         try
         {
-            await unitOfWork.CompleteAsync();
+            if (unitOfWork.HasChanges())
+                await unitOfWork.CompleteAsync();
         }
         catch (DbUpdateConcurrencyException ex)
         {
             if (!await unitOfWork.TournamentRepository.AnyAsync(id))
                 return NotFound($"Tournament with id '{id}' was not found");
-            return Conflict(ex.Message);
+            return Conflict(new
+            {
+                Message = "The tournament you are trying to update has been modified by another user. Please reload the tournament and try again.",
+                Details = ex.Message
+            });
         }
         catch (Exception ex)
         {
@@ -158,7 +182,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteTournamentDetails(int id)
     {
-        var tournament = await unitOfWork.TournamentRepository.GetTournamentByIdAsync(id);
+        var tournament = await unitOfWork.TournamentRepository.GetByIdAsync(id);
         if (tournament == null)
             return NotFound($"Tournament with id '{id}' was not found");
 

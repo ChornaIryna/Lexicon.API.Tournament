@@ -1,6 +1,6 @@
 ﻿namespace Tournament.Core.DTOs;
 public record GameManipulationDto
 {
-    public required string Title { get; set; }
-    public DateTime Time { get; set; }
+    public required string Title { get; init; }
+    public DateTime Time { get; init; }
 }
