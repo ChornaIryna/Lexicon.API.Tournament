@@ -47,7 +47,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
             return BadRequest(ModelState);
 
         if (id != tournamentDto.Id
-            && !await unitOfWork.TournamentRepository.TournamentExists(id))
+            && !await unitOfWork.TournamentRepository.AnyAsync(id))
             return BadRequest();
 
         var tournamentDetails = await unitOfWork.TournamentRepository.GetTournamentByIdAsync(id);
@@ -74,13 +74,13 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            if (!await unitOfWork.TournamentRepository.TournamentExists(id))
+            if (!await unitOfWork.TournamentRepository.AnyAsync(id))
                 return NotFound($"Tournament with id '{id}' was not found");
             return Conflict(ex.Message);
         }
         catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return StatusCode(500, ex.Message);
         }
 
         return NoContent();
@@ -114,7 +114,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         }
         catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return StatusCode(500, ex.Message);
         }
 
         var createdTournamentDto = mapper.Map<TournamentDto>(tournament);
@@ -144,13 +144,13 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            if (!await unitOfWork.TournamentRepository.TournamentExists(id))
+            if (!await unitOfWork.TournamentRepository.AnyAsync(id))
                 return NotFound($"Tournament with id '{id}' was not found");
             return Conflict(ex.Message);
         }
         catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return StatusCode(500, ex.Message);
         }
         return NoContent();
     }
@@ -169,8 +169,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
-            return BadRequest(ex.Message);
+            return StatusCode(500, ex.Message);
         }
 
         return NoContent();
