@@ -50,7 +50,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TournamentDto>> GetTournamentDetails(int id, [FromQuery] bool includeGames = false)
     {
-        var tournamentDetails = await unitOfWork.TournamentRepository.GetByIdAsync(id);
+        var tournamentDetails = await unitOfWork.TournamentRepository.FindByIdAsync(id);
 
         if (tournamentDetails == null)
             return NotFound($"Tournament with Id '{id}' was not found.");
@@ -69,7 +69,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
             && !await unitOfWork.TournamentRepository.AnyAsync(id))
             return BadRequest();
 
-        var tournamentDetails = await unitOfWork.TournamentRepository.GetByIdAsync(id);
+        var tournamentDetails = await unitOfWork.TournamentRepository.FindByIdAsync(id, true);
         if (tournamentDetails == null)
             return NotFound($"Tournament with id '{id}' was not found");
         mapper.Map(tournamentDto, tournamentDetails);
@@ -146,7 +146,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
         if (patchDoc == null)
             return BadRequest("Patch document cannot be null.");
 
-        var tournamentDetails = await unitOfWork.TournamentRepository.GetByIdAsync(id);
+        var tournamentDetails = await unitOfWork.TournamentRepository.FindByIdAsync(id, true);
         if (tournamentDetails == null)
             return NotFound($"Tournament with id '{id}' was not found");
 
@@ -182,7 +182,7 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteTournamentDetails(int id)
     {
-        var tournament = await unitOfWork.TournamentRepository.GetByIdAsync(id);
+        var tournament = await unitOfWork.TournamentRepository.FindByIdAsync(id);
         if (tournament == null)
             return NotFound($"Tournament with id '{id}' was not found");
 

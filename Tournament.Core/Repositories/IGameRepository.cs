@@ -3,6 +3,5 @@
 namespace Tournament.Core.Repositories;
 public interface IGameRepository : IRepository<Game>
 {
-    Task<IEnumerable<Game>> GetAllAsync(int tournamentDetailsId);
-    Task<IEnumerable<Game>> GetGamesByTitleAsync(string title);
+    Task<IEnumerable<Game>> GetGamesByTitleAsync(int id, string? title);
 }

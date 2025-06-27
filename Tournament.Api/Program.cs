@@ -9,23 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<TournamentContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("TournamentContext") ?? throw new InvalidOperationException("Connection string 'TournamentContext' not found.")));
 
-builder.Services.AddControllers(option => option.ReturnHttpNotAcceptable = true)
-                .AddNewtonsoftJson()
-                .AddXmlDataContractSerializerFormatters();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddApiServices();
 builder.Services.AddAutoMapper(typeof(TournamentMappings));
 builder.Services.AddScoped<IUoW, UoW>();
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-});
 
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
    .AddNegotiate();
@@ -43,9 +29,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     await app.SeedDataAsync();
-    app.UseCors();
+    app.UseCors("AllowAllOrigins");
 }
-
+else
+{
+    app.UseExceptionHandler("/error");
+    app.UseHsts();
+    app.UseCors("AllowSpecificOrigins");
+}
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

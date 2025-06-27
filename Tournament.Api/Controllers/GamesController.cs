@@ -19,9 +19,7 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
             return NotFound($"Tournament with Id '{tournamentId}' was not found.");
 
-        var games = !string.IsNullOrEmpty(queryParameters.SearchTerm)
-            ? await unitOfWork.GameRepository.GetGamesByTitleAsync(queryParameters.SearchTerm)
-            : await unitOfWork.GameRepository.GetAllAsync(tournamentId);
+        var games = await unitOfWork.GameRepository.GetGamesByTitleAsync(tournamentId, queryParameters.SearchTerm);
 
         if (games == null || !games.Any())
             return NotFound("No games found for the specified tournament.");
@@ -49,7 +47,7 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
             return NotFound($"Tournament with Id '{tournamentId}' was not found.");
 
-        var game = await unitOfWork.GameRepository.GetByIdAsync(id);
+        var game = await unitOfWork.GameRepository.FindByIdAsync(id);
         if (game == null)
             return NotFound($"Game with Id '{id}' was not found.");
 
@@ -71,7 +69,7 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         if (id != game.Id)
             return BadRequest("Game ID mismatch.");
 
-        var existingGame = await unitOfWork.GameRepository.GetByIdAsync(id);
+        var existingGame = await unitOfWork.GameRepository.FindByIdAsync(id, true);
         if (existingGame == null)
             return NotFound($"Game with id '{id}' does not exist.");
 
@@ -135,7 +133,7 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
             return NotFound($"Tournament with Id '{tournamentId}' was not found.");
 
-        var game = await unitOfWork.GameRepository.GetByIdAsync(id);
+        var game = await unitOfWork.GameRepository.FindByIdAsync(id, true);
         if (game == null)
             return NotFound($"Game with id '{id}' does not exist.");
 
@@ -177,7 +175,7 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
             return NotFound($"Tournament with Id '{tournamentId}' was not found.");
 
-        var game = await unitOfWork.GameRepository.GetByIdAsync(id);
+        var game = await unitOfWork.GameRepository.FindByIdAsync(id);
         if (game == null)
             return NotFound($"Game with id '{id}' does not exist.");
 

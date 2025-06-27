@@ -3,5 +3,5 @@
 namespace Tournament.Core.Repositories;
 public interface ITournamentRepository : IRepository<TournamentDetails>
 {
-    Task<IEnumerable<TournamentDetails>> GetAllAsync(bool includeGames = false);
+    Task<IEnumerable<TournamentDetails>> GetAllAsync(bool includeGames = false, bool trackChanges = false);
 }
