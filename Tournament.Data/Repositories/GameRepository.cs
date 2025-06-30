@@ -6,12 +6,20 @@ using Tournament.Data.Data;
 namespace Tournament.Data.Repositories;
 public class GameRepository(TournamentContext tournamentContext) : BaseRepository<Game>(tournamentContext), IGameRepository
 {
-    public async Task<IEnumerable<Game>> GetGamesByTitleAsync(int id, string? title)
+    public async Task<IEnumerable<Game>> GetGamesByTitleAsync(int id, string title)
     {
-        return await GetByConditionAsync(g =>
+        return await GetByCondition(g =>
+            g.TournamentDetailsId == id
+            && !string.IsNullOrEmpty(title)
+            && EF.Functions.Like(g.Title, $"{title}")).ToListAsync();
+    }
+
+    public async Task<IEnumerable<Game>> SearchGamesByTitleAsync(int id, string? title)
+    {
+        return await GetByCondition(g =>
             g.TournamentDetailsId == id &&
             (string.IsNullOrEmpty(title) ||
              g.Title != null &&
-             EF.Functions.Like(g.Title, $"%{title}%")));
+             EF.Functions.Like(g.Title, $"%{title}%"))).ToListAsync();
     }
 }

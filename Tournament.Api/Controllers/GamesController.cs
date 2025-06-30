@@ -19,7 +19,7 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
             return NotFound($"Tournament with Id '{tournamentId}' was not found.");
 
-        var games = await unitOfWork.GameRepository.GetGamesByTitleAsync(tournamentId, queryParameters.SearchTerm);
+        var games = await unitOfWork.GameRepository.SearchGamesByTitleAsync(tournamentId, queryParameters.SearchTerm);
 
         if (games == null || !games.Any())
             return NotFound("No games found for the specified tournament.");
@@ -41,23 +41,20 @@ public class GamesController(IMapper mapper, IUoW unitOfWork) : ControllerBase
         return Ok(mapper.Map<IEnumerable<GameDto>>(paginatedGames));
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<GameDto>> GetGame(int tournamentId, int id)
+    [HttpGet("{title}")]
+    public async Task<ActionResult<GameDto>> GetGame(int tournamentId, string title)
     {
         if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
             return NotFound($"Tournament with Id '{tournamentId}' was not found.");
 
-        var game = await unitOfWork.GameRepository.FindByIdAsync(id);
-        if (game == null)
-            return NotFound($"Game with Id '{id}' was not found.");
+        var games = await unitOfWork.GameRepository.GetGamesByTitleAsync(tournamentId, title);
+        if (games == null || !games.Any())
+            return NotFound($"Game with Title '{title}' was not found.");
 
-        if (game.TournamentDetailsId != tournamentId)
-            return BadRequest($"Game with id '{id}' does not belong to tournament with Id '{tournamentId}'.");
-
-        return Ok(mapper.Map<GameDto>(game));
+        return Ok(mapper.Map<IEnumerable<GameDto>>(games));
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("{id:int}")]
     public async Task<IActionResult> PutGame(int tournamentId, int id, GameEditDto game)
     {
         if (!ModelState.IsValid)

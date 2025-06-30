@@ -33,8 +33,8 @@ public abstract class BaseRepository<T>(TournamentContext context) : IRepository
 
     public virtual void Update(T entity) => context.Update(entity);
 
-    public async Task<IEnumerable<T>> GetByConditionAsync(Expression<Func<T, bool>> expression, bool trackChanges = false) =>
+    public IQueryable<T> GetByCondition(Expression<Func<T, bool>> expression, bool trackChanges = false) =>
         trackChanges
-        ? await DbSet.Where(expression).ToListAsync()
-        : await DbSet.Where(expression).AsNoTracking().ToListAsync();
+        ? DbSet.Where(expression)
+        : DbSet.Where(expression).AsNoTracking();
 }
