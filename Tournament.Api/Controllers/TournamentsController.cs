@@ -18,6 +18,12 @@ public class TournamentsController(IMapper mapper, IUoW unitOfWork) : Controller
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TournamentDto>>> GetTournaments([FromQuery] QueryParameters queryParameters, [FromQuery] bool includeGames = false)
     {
+        if (queryParameters.PageNumber < 1 || queryParameters.PageSize < 1)
+            return BadRequest("Page number and size must be greater than 0");
+
+        if (queryParameters.PageSize > 100)
+            return BadRequest("Page size cannot exceed 100");
+
         var tournaments = await unitOfWork.TournamentRepository.GetAllAsync(includeGames);
         if (tournaments == null || !tournaments.Any())
             return NotFound("No tournaments found.");
