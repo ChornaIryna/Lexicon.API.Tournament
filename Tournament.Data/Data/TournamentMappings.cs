@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using Tournament.Core.DTOs;
 using Tournament.Core.Entities;
+using Tournament.Shared.DTOs;
 
 namespace Tournament.Data.Data;
 public class TournamentMappings : Profile
@@ -17,6 +17,11 @@ public class TournamentMappings : Profile
             .ReverseMap();
         CreateMap<TournamentEditDto, TournamentDetails>()
             .ForMember(target => target.Games, config => config.AllowNull())
+            .ForMember(target => target.StartDate,
+                        opt => opt.MapFrom((src, destination) =>
+                                             src.StartDate == default
+                                             ? destination.StartDate
+                                             : src.StartDate))
             .ReverseMap();
 
         CreateMap<GameDto, Game>()

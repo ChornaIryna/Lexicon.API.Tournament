@@ -1,4 +1,4 @@
-﻿namespace Tournament.Core.DTOs;
+﻿namespace Tournament.Shared.DTOs;
 public record TournamentDto
 {
     public required string Title { get; init; }

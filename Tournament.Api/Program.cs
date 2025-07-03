@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Negotiate;
 using Microsoft.EntityFrameworkCore;
 using Tournament.Api.Extensions;
-using Tournament.Core.Repositories;
 using Tournament.Data.Data;
-using Tournament.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<TournamentContext>(options =>
@@ -11,7 +9,8 @@ builder.Services.AddDbContext<TournamentContext>(options =>
 
 builder.Services.AddApiServices();
 builder.Services.AddAutoMapper(typeof(TournamentMappings));
-builder.Services.AddScoped<IUoW, UoW>();
+builder.Services.ConfigureServiceLayerServices();
+builder.Services.ConfigureRepositories();
 
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
    .AddNegotiate();

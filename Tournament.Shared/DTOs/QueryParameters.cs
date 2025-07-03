@@ -1,4 +1,4 @@
-﻿namespace Tournament.Core.DTOs;
+﻿namespace Tournament.Shared.DTOs;
 public class QueryParameters
 {
     public string? OrderBy { get; set; }
