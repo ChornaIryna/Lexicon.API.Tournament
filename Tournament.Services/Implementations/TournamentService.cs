@@ -3,14 +3,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using Service.Contracts.Interfaces;
-using System.ComponentModel.DataAnnotations;
 using Tournament.Core.Entities;
 using Tournament.Core.Repositories;
 using Tournament.Shared.DTOs;
 using Tournament.Shared.Responses;
 
 namespace Tournament.Services.Implementations;
-public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentService
+public class TournamentService(IUoW unitOfWork, IMapper mapper) : ServiceBase, ITournamentService
 {
     public async Task<ApiResponse<TournamentDto>> CreateAsync(TournamentCreateDto tournamentDto)
     {
@@ -28,13 +27,10 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
         {
             await unitOfWork.CompleteAsync();
             var createdTournamentDto = mapper.Map<TournamentDto>(tournament);
-            return new ApiResponse<TournamentDto>
-            {
-                Success = true,
-                Data = createdTournamentDto,
-                Status = StatusCodes.Status201Created,
-                Message = "Tournament created successfully"
-            };
+            return CreateSuccessResponse(
+                createdTournamentDto,
+                StatusCodes.Status201Created,
+                "Tournament created successfully");
         }
         catch (Exception ex)
         {
@@ -61,12 +57,10 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
         try
         {
             await unitOfWork.CompleteAsync();
-            return new ApiResponse<object>
-            {
-                Success = true,
-                Status = StatusCodes.Status204NoContent,
-                Message = "Tournament deleted successfully"
-            };
+            return CreateSuccessResponse<object>(
+                null,
+                StatusCodes.Status204NoContent,
+                "Tournament deleted successfully");
         }
         catch (Exception ex)
         {
@@ -77,40 +71,29 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
         }
     }
 
-    public async Task<ApiResponse<TournamentDto?>> GetByIdAsync(int id, bool includeGames = false)
+    public async Task<ApiResponse<TournamentDto>> GetByIdAsync(int id, bool includeGames = false)
     {
         var tournamentDetails = await unitOfWork.TournamentRepository.FindByIdAsync(id);
 
         if (tournamentDetails == null)
-            return CreateErrorResponse<TournamentDto?>(
+            return CreateErrorResponse<TournamentDto>(
                 StatusCodes.Status404NotFound,
                 $"Tournament with id '{id}' was not found");
 
         var tournamentDto = includeGames
             ? mapper.Map<TournamentWithGamesDto>(tournamentDetails)
             : mapper.Map<TournamentDto>(tournamentDetails);
-        return new ApiResponse<TournamentDto?>
-        {
-            Success = true,
-            Status = StatusCodes.Status200OK,
-            Message = "Tournament retrieved successfully",
-            Data = tournamentDto
-        };
+        return CreateSuccessResponse(
+            tournamentDto,
+            StatusCodes.Status200OK,
+            "Tournament retrieved successfully");
     }
 
-    public async Task<ApiResponse<IEnumerable<TournamentDto>>> GetTournamentsAsync(QueryParameters queryParameters, bool includeGames = false)
+    public async Task<ApiResponse<IEnumerable<TournamentDto>>> GetAllAsync(QueryParameters queryParameters, bool includeGames = false)
     {
         ArgumentNullException.ThrowIfNull(queryParameters);
-
-        if (queryParameters.PageNumber < 1 || queryParameters.PageSize < 1)
-            return CreateErrorResponse<IEnumerable<TournamentDto>>(
-                StatusCodes.Status400BadRequest,
-                "Page number and page size must be greater than 0");
-
-        if (queryParameters.PageSize > 100)
-            return CreateErrorResponse<IEnumerable<TournamentDto>>(
-                StatusCodes.Status400BadRequest,
-                "Page size cannot exceed 100");
+        if (!ValidateQueryParameters(queryParameters, out var errorResponse))
+            return CreateErrorResponse<IEnumerable<TournamentDto>>(errorResponse!.Status, errorResponse.Message);
 
         var query = unitOfWork.TournamentRepository
                                     .GetFiltered(t => queryParameters.SearchTerm == null
@@ -130,23 +113,14 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
         var tournamentsDto = includeGames
                             ? mapper.Map<IEnumerable<TournamentWithGamesDto>>(paginatedTournaments)
                             : mapper.Map<IEnumerable<TournamentDto>>(paginatedTournaments);
-        return new ApiResponse<IEnumerable<TournamentDto>>
-        {
-            Success = true,
-            Status = StatusCodes.Status200OK,
-            Message = "Tournaments retrieved successfully",
-            Data = tournamentsDto,
-            MetaData = new
-            {
-                TotalCount = totalCount,
-                CurrentPage = queryParameters.PageNumber,
-                NumberOfEntitiesOnPage = queryParameters.PageSize,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)queryParameters.PageSize)
-            }
-        };
+        return CreateSuccessResponse(
+            tournamentsDto,
+            StatusCodes.Status200OK,
+            "Tournaments retrieved successfully",
+            CreatePaginationMetadata(totalCount, queryParameters));
     }
 
-    public async Task<ApiResponse<TournamentDto>> PatchAsync(int id, JsonPatchDocument<TournamentEditDto> patchDoc)
+    public async Task<ApiResponse<TournamentDto>> UpdateAsync(int id, JsonPatchDocument<TournamentEditDto> patchDoc)
     {
         if (patchDoc == null)
             return CreateErrorResponse<TournamentDto>(
@@ -187,13 +161,10 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
                 await unitOfWork.CompleteAsync();
 
             var resultDto = mapper.Map<TournamentDto>(tournamentDetails);
-            return new ApiResponse<TournamentDto>
-            {
-                Success = true,
-                Status = StatusCodes.Status200OK,
-                Message = "Tournament patched successfully",
-                Data = resultDto
-            };
+            return CreateSuccessResponse(
+                resultDto,
+                StatusCodes.Status200OK,
+                "Tournament updated successfully");
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -232,8 +203,7 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
 
         mapper.Map(tournamentDto, tournamentDetails);
 
-        IEnumerable<string> errors = [];
-        if (!ValidateEntity(tournamentDetails, out errors))
+        if (!ValidateEntity(tournamentDetails, out var errors))
             return CreateErrorResponse<object>(
                 StatusCodes.Status400BadRequest,
                 "Validation failed",
@@ -243,12 +213,10 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
         {
             if (unitOfWork.HasChanges())
                 await unitOfWork.CompleteAsync();
-            return new ApiResponse<object>
-            {
-                Success = true,
-                Status = StatusCodes.Status204NoContent,
-                Message = "Tournament updated successfully"
-            };
+            return CreateSuccessResponse<object>(
+                null,
+                StatusCodes.Status204NoContent,
+                "Tournament updated successfully");
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -271,26 +239,6 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
                 "Failed to update tournament",
                 [ex.Message]);
         }
-    }
-
-    private ApiResponse<T> CreateErrorResponse<T>(int status, string message, IEnumerable<string>? errors = null)
-    {
-        return new ApiResponse<T>
-        {
-            Success = false,
-            Status = status,
-            Message = message,
-            Errors = errors ?? Enumerable.Empty<string>()
-        };
-    }
-
-    private bool ValidateEntity<T>(T entity, out IEnumerable<string> errors)
-    {
-        var validationContext = new ValidationContext(entity);
-        var validationResults = new List<ValidationResult>();
-        var isValid = Validator.TryValidateObject(entity, validationContext, validationResults, true);
-        errors = validationResults.Select(x => x.ErrorMessage ?? string.Empty);
-        return isValid;
     }
 
     private static IQueryable<TournamentDetails> ApplyOrdering(IQueryable<TournamentDetails> tournaments, QueryParameters queryParameters)

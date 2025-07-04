@@ -1,8 +1,8 @@
-﻿using Tournament.Core.Entities;
+﻿using System.Linq.Expressions;
+using Tournament.Core.Entities;
 
 namespace Tournament.Core.Repositories;
 public interface IGameRepository : IRepository<Game>
 {
-    Task<IEnumerable<Game>> GetGamesByTitleAsync(int id, string title);
-    Task<IEnumerable<Game>> SearchGamesByTitleAsync(int id, string? title);
+    IQueryable<Game> GetFiltered(Expression<Func<Game, bool>>? filter = null, bool trackChanges = false);
 }

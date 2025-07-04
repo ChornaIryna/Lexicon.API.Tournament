@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Expressions;
 using Tournament.Core.Entities;
 using Tournament.Core.Repositories;
 using Tournament.Data.Data;
@@ -6,20 +6,11 @@ using Tournament.Data.Data;
 namespace Tournament.Data.Repositories;
 public class GameRepository(TournamentContext tournamentContext) : BaseRepository<Game>(tournamentContext), IGameRepository
 {
-    public async Task<IEnumerable<Game>> GetGamesByTitleAsync(int id, string title)
+    public IQueryable<Game> GetFiltered(Expression<Func<Game, bool>>? filter = null, bool trackChanges = false)
     {
-        return await GetByCondition(g =>
-            g.TournamentDetailsId == id
-            && !string.IsNullOrEmpty(title)
-            && EF.Functions.Like(g.Title, $"{title}")).ToListAsync();
-    }
-
-    public async Task<IEnumerable<Game>> SearchGamesByTitleAsync(int id, string? title)
-    {
-        return await GetByCondition(g =>
-            g.TournamentDetailsId == id &&
-            (string.IsNullOrEmpty(title) ||
-             g.Title != null &&
-             EF.Functions.Like(g.Title, $"%{title}%"))).ToListAsync();
+        var query = filter == null
+            ? GetAll(trackChanges)
+            : GetByCondition(filter, trackChanges);
+        return query;
     }
 }

@@ -15,7 +15,7 @@ public class TournamentsController(IServiceManager serviceManager) : ControllerB
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TournamentDto>>> GetTournaments([FromQuery] QueryParameters queryParameters, [FromQuery] bool includeGames = false)
     {
-        var response = await serviceManager.TournamentService.GetTournamentsAsync(queryParameters, includeGames);
+        var response = await serviceManager.TournamentService.GetAllAsync(queryParameters, includeGames);
         return this.HandleApiResponse(response);
     }
 
@@ -45,7 +45,7 @@ public class TournamentsController(IServiceManager serviceManager) : ControllerB
     [HttpPatch("{id:int}")]
     public async Task<IActionResult> PatchTournamentDetails(int id, JsonPatchDocument<TournamentEditDto> patchDoc)
     {
-        var response = await serviceManager.TournamentService.PatchAsync(id, patchDoc);
+        var response = await serviceManager.TournamentService.UpdateAsync(id, patchDoc);
         return this.HandleApiResponse(response);
     }
 

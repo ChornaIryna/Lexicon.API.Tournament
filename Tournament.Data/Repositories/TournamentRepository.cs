@@ -9,18 +9,14 @@ public class TournamentRepository(TournamentContext tournamentContext) : BaseRep
 {
     public IQueryable<TournamentDetails> GetFiltered(Expression<Func<TournamentDetails, bool>>? filter = null, bool includeGames = false, bool trackChanges = false)
     {
-        var query = GetAll();
-
-        IQueryable<TournamentDetails> tournaments = trackChanges
-                                                    ? query
-                                                    : query.AsNoTracking();
-        if (filter != null)
-            tournaments = tournaments.Where(filter);
-
+        var query = filter == null
+            ? GetAll(trackChanges)
+            : GetByCondition(filter, trackChanges);
         if (includeGames)
-            tournaments = tournaments.Include(t => t.Games);
-        return tournaments;
+            query = query.Include(t => t.Games);
+        return query;
     }
+
 
     public override async Task<TournamentDetails?> FindByIdAsync(int id, bool trackChanges = false) =>
         trackChanges

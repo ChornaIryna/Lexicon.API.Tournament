@@ -44,7 +44,7 @@ public abstract class BaseRepository<T>(TournamentContext context) : IRepository
 
     public virtual void Update(T entity) => Context.Update(entity);
 
-    public IQueryable<T> GetByCondition(Expression<Func<T, bool>> expression, bool trackChanges = false) =>
+    public virtual IQueryable<T> GetByCondition(Expression<Func<T, bool>> expression, bool trackChanges = false) =>
         trackChanges
         ? DbSet.Where(expression)
         : DbSet.Where(expression).AsNoTracking();
