@@ -76,13 +76,7 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
                 [ex.Message]);
         }
     }
-    public async Task<IEnumerable<TournamentDto>> GetAllAsync(bool includeGames = false)
-    {
-        var tournaments = await unitOfWork.TournamentRepository.GetAllAsync(includeGames);
-        return includeGames
-            ? mapper.Map<IEnumerable<TournamentWithGamesDto>>(tournaments)
-            : mapper.Map<IEnumerable<TournamentDto>>(tournaments);
-    }
+
     public async Task<ApiResponse<TournamentDto?>> GetByIdAsync(int id, bool includeGames = false)
     {
         var tournamentDetails = await unitOfWork.TournamentRepository.FindByIdAsync(id);
@@ -118,20 +112,19 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
                 StatusCodes.Status400BadRequest,
                 "Page size cannot exceed 100");
 
-        var tournaments = await unitOfWork.TournamentRepository.GetAllAsync(includeGames);
-        if (!tournaments.Any())
+        var query = unitOfWork.TournamentRepository
+                                    .GetFiltered(t => queryParameters.SearchTerm == null
+                                                || t.Title.Contains(queryParameters.SearchTerm),
+                                                includeGames);
+        if (!query.Any())
             return CreateErrorResponse<IEnumerable<TournamentDto>>(
                 StatusCodes.Status404NotFound,
                 "No tournaments found");
 
-        tournaments = ApplyFiltering(tournaments, queryParameters);
-        tournaments = ApplyOrdering(tournaments, queryParameters);
+        query = ApplyOrdering(query, queryParameters);
 
-        var totalCount = tournaments.Count();
-        var paginatedTournaments = tournaments
-                                .Skip((queryParameters.PageNumber - 1) * queryParameters.PageSize)
-                                .Take(queryParameters.PageSize);
-
+        var (paginatedTournaments, totalCount) = await unitOfWork.TournamentRepository
+                                                    .GetPagedAsync(query, queryParameters.PageNumber, queryParameters.PageSize);
 
 
         var tournamentsDto = includeGames
@@ -299,15 +292,8 @@ public class TournamentService(IUoW unitOfWork, IMapper mapper) : ITournamentSer
         errors = validationResults.Select(x => x.ErrorMessage ?? string.Empty);
         return isValid;
     }
-    private static IEnumerable<TournamentDetails> ApplyFiltering(IEnumerable<TournamentDetails> tournaments, QueryParameters queryParameters)
-    {
-        if (!string.IsNullOrEmpty(queryParameters.SearchTerm))
-            tournaments = tournaments.Where(t =>
-                t.Title.Contains(queryParameters.SearchTerm, StringComparison.CurrentCultureIgnoreCase));
-        return tournaments;
-    }
 
-    private static IEnumerable<TournamentDetails> ApplyOrdering(IEnumerable<TournamentDetails> tournaments, QueryParameters queryParameters)
+    private static IQueryable<TournamentDetails> ApplyOrdering(IQueryable<TournamentDetails> tournaments, QueryParameters queryParameters)
     {
         if (string.IsNullOrEmpty(queryParameters.OrderBy)) return tournaments;
 

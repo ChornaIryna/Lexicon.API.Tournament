@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using Tournament.Core.Entities;
 using Tournament.Core.Repositories;
 using Tournament.Data.Data;
@@ -6,18 +7,19 @@ using Tournament.Data.Data;
 namespace Tournament.Data.Repositories;
 public class TournamentRepository(TournamentContext tournamentContext) : BaseRepository<TournamentDetails>(tournamentContext), ITournamentRepository
 {
-    public async Task<IEnumerable<TournamentDetails>> GetAllAsync(bool includeGames, bool trackChanges = false)
+    public IQueryable<TournamentDetails> GetFiltered(Expression<Func<TournamentDetails, bool>>? filter = null, bool includeGames = false, bool trackChanges = false)
     {
-        var query = Context.TournamentDetails;
+        var query = GetAll();
 
         IQueryable<TournamentDetails> tournaments = trackChanges
                                                     ? query
                                                     : query.AsNoTracking();
+        if (filter != null)
+            tournaments = tournaments.Where(filter);
 
         if (includeGames)
             tournaments = tournaments.Include(t => t.Games);
-
-        return await tournaments.ToListAsync();
+        return tournaments;
     }
 
     public override async Task<TournamentDetails?> FindByIdAsync(int id, bool trackChanges = false) =>
