@@ -29,6 +29,11 @@ public class TournamentMappings : Profile
         CreateMap<GameCreateDto, Game>()
             .ReverseMap();
         CreateMap<GameEditDto, Game>()
+            .ForMember(target => target.Time,
+                        opt => opt.MapFrom((src, destination) =>
+                                             src.Time == default
+                                             ? destination.Time
+                                             : src.Time))
             .ReverseMap();
     }
 }

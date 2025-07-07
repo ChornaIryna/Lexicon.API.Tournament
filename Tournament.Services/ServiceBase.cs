@@ -31,6 +31,8 @@ public abstract class ServiceBase()
 
     protected static bool ValidateEntity<T>(T entity, out IEnumerable<string> errors)
     {
+        ArgumentNullException.ThrowIfNull(entity);
+
         var validationContext = new ValidationContext(entity);
         var validationResults = new List<ValidationResult>();
         var isValid = Validator.TryValidateObject(entity, validationContext, validationResults, true);
@@ -42,7 +44,7 @@ public abstract class ServiceBase()
     {
         errorResponse = null;
 
-        if (queryParameters.PageNumber < 1 || queryParameters.PageSize < 1)
+        if (!queryParameters.IsValid())
         {
             errorResponse = CreateErrorResponse<object>(
                 StatusCodes.Status400BadRequest,

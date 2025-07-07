@@ -1,10 +1,8 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts.Interfaces;
 using Tournament.Core.Entities;
-using Tournament.Core.Repositories;
 using Tournament.Presentation.Extensions;
 using Tournament.Shared.DTOs;
 
@@ -12,7 +10,7 @@ namespace Tournament.Presentation.Controllers;
 [AllowAnonymous]
 [Route("api/tournaments/{tournamentId:int}/[controller]")]
 [ApiController]
-public class GamesController(IMapper mapper, IUoW unitOfWork, IServiceManager serviceManager) : ControllerBase
+public class GamesController(IServiceManager serviceManager) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GameDto>>> GetGames(int tournamentId, [FromQuery] QueryParameters queryParameters)
@@ -49,7 +47,7 @@ public class GamesController(IMapper mapper, IUoW unitOfWork, IServiceManager se
         var response = await serviceManager.GameService.CreateAsync(tournamentId, gameDto);
 
         return response.Success
-            ? CreatedAtAction(nameof(GetGames), new { tournamentId, id = response.MetaData }, mapper.Map<GameDto>(response.Data))
+            ? CreatedAtAction(nameof(GetGames), new { tournamentId, id = response.MetaData }, response.Data)
             : this.HandleApiResponse(response);
     }
 
