@@ -7,6 +7,9 @@ public static class ControllerExtensions
 {
     public static ActionResult HandleApiResponse<T>(this ControllerBase controller, ApiResponse<T> response)
     {
+        if (response.MetaData != null)
+            controller.Response.Headers.Append("X-Metadata", System.Text.Json.JsonSerializer.Serialize(response.MetaData));
+
         if (response.Success)
             return response.Data == null
                 ? controller.NoContent()
