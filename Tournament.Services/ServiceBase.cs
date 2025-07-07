@@ -63,7 +63,7 @@ public abstract class ServiceBase()
         return true;
     }
 
-    protected object CreatePaginationMetadata(int totalCount, QueryParameters queryParameters)
+    protected static object CreatePaginationMetadata(int totalCount, QueryParameters queryParameters)
     {
         return new
         {

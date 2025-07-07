@@ -36,7 +36,7 @@ public static class ControllerExtensions
                 Status = statusCode,
                 Errors = new Dictionary<string, string[]>
                 {
-                    { "Errors", response.Errors.ToArray() }
+                    { "Errors", response.Errors.Where(e => e != null).Cast<string>().ToArray() }
                 }
             };
             return controller.StatusCode(statusCode, errorResponse);
