@@ -1,4 +1,6 @@
-﻿using Tournament.Core.Entities;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Tournament.Core.Entities;
 namespace Tournament.Data.Data;
 
 public class SeedData<T>(TournamentContext context) where T : class
@@ -20,6 +22,30 @@ public class SeedData<T>(TournamentContext context) where T : class
         }
     }
 
+    public async Task GenerateAdminUserAsync(IConfiguration configuration, UserManager<ApplicationUser> userManager)
+    {
+        var adminUser = new ApplicationUser
+        {
+            Name = "Admin",
+            Age = 20,
+            Position = "Admin in Development",
+            Email = "admin@test.email",
+            UserName = $"admin@test.email",
+        };
+
+        var password = configuration["DefaultAdminPassword"];
+
+        if (adminUser is ApplicationUser user)
+        {
+            var result = await userManager.CreateAsync(user, password!);
+            if (result.Succeeded)
+                await userManager.AddToRoleAsync(user, "Admin");
+            else
+                Console.WriteLine($"Error creating admin user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+        }
+    }
+
+
     private async Task<T?> CreateEntityAsync(int index)
     {
         if (typeof(T) == typeof(TournamentDetails))
@@ -30,6 +56,7 @@ public class SeedData<T>(TournamentContext context) where T : class
                 StartDate = DateTime.UtcNow.AddDays(index)
             } as T;
         }
+
         if (typeof(T) == typeof(Game))
         {
             // Ensure there is at least one TournamentDetails to reference
@@ -55,6 +82,7 @@ public class SeedData<T>(TournamentContext context) where T : class
                 TournamentDetailsId = randomTournamentId
             } as T;
         }
+
         return null;
     }
 }

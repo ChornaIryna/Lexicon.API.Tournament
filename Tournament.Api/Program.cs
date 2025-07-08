@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authentication.Negotiate;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Tournament.Api.Extensions;
+using Tournament.Core.Entities;
 using Tournament.Data.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,14 +15,27 @@ builder.Services.AddAutoMapper(typeof(TournamentMappings));
 builder.Services.ConfigureServiceLayerServices();
 builder.Services.ConfigureRepositories();
 
-builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
-   .AddNegotiate();
-
-builder.Services.AddAuthorization(options =>
+builder.Services
+    .AddAuthentication(NegotiateDefaults.AuthenticationScheme)
+    .AddNegotiate();
+builder.Services
+    .AddAuthorization(options =>
 {
-    // By default, all incoming requests will be authorized according to the default policy.
     options.FallbackPolicy = options.DefaultPolicy;
 });
+builder.Services
+    .AddIdentityCore<ApplicationUser>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequireDigit = false;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireLowercase = false;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<TournamentContext>()
+    .AddDefaultTokenProviders();
 
 var app = builder.Build();
 
@@ -28,7 +43,6 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    await app.SeedDataAsync();
     app.UseCors("AllowAllOrigins");
 }
 else
@@ -37,8 +51,25 @@ else
     app.UseHsts();
     app.UseCors("AllowSpecificOrigins");
 }
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await app.SeedDataAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred during application startup.");
+        throw;
+    }
+}
+
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

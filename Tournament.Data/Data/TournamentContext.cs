@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Tournament.Core.Entities;
 
 namespace Tournament.Data.Data;
 
-public class TournamentContext : DbContext
+public class TournamentContext : IdentityDbContext<ApplicationUser, IdentityRole, string>
 {
     public TournamentContext(DbContextOptions<TournamentContext> options)
         : base(options)
