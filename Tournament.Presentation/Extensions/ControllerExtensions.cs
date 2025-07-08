@@ -25,7 +25,7 @@ public static class ControllerExtensions
                 403 => StatusCodes.Status403Forbidden,
                 422 => StatusCodes.Status422UnprocessableEntity,
                 500 => StatusCodes.Status500InternalServerError,
-                _ => StatusCodes.Status500InternalServerError // Default to 500 if no specific status is set
+                _ => StatusCodes.Status500InternalServerError
             };
             controller.Response.StatusCode = statusCode;
 

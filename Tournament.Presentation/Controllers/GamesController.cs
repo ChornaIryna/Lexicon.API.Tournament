@@ -13,33 +13,20 @@ namespace Tournament.Presentation.Controllers;
 public class GamesController(IServiceManager serviceManager) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<GameDto>>> GetGames(int tournamentId, [FromQuery] QueryParameters queryParameters)
-    {
-        var response = await serviceManager.GameService.GetAllAsync(tournamentId, queryParameters);
-        return this.HandleApiResponse(response);
-    }
+    public async Task<ActionResult<IEnumerable<GameDto>>> GetGames(int tournamentId, [FromQuery] QueryParameters queryParameters) =>
+        this.HandleApiResponse(await serviceManager.GameService.GetAllAsync(tournamentId, queryParameters));
 
     [HttpGet("{title}")]
-    public async Task<ActionResult<GameDto>> GetGame(int tournamentId, string title)
-    {
-        var response = await serviceManager.GameService.GetByTitleAsync(tournamentId, title);
-        return this.HandleApiResponse(response);
-    }
+    public async Task<ActionResult<GameDto>> GetGame(int tournamentId, string title) =>
+        this.HandleApiResponse(await serviceManager.GameService.GetByTitleAsync(tournamentId, title));
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<GameDto>> GetGame(int tournamentId, int id)
-    {
-        var response = await serviceManager.GameService.GetByIdAsync(tournamentId, id);
-        return this.HandleApiResponse(response);
-
-    }
+    public async Task<ActionResult<GameDto>> GetGame(int tournamentId, int id) =>
+        this.HandleApiResponse(await serviceManager.GameService.GetByIdAsync(tournamentId, id));
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> PutGame(int tournamentId, int id, GameEditDto game)
-    {
-        var response = await serviceManager.GameService.UpdateAsync(tournamentId, id, game);
-        return this.HandleApiResponse(response);
-    }
+    public async Task<IActionResult> PutGame(int tournamentId, int id, GameEditDto game) =>
+        this.HandleApiResponse(await serviceManager.GameService.UpdateAsync(tournamentId, id, game));
 
     [HttpPost]
     public async Task<ActionResult<Game>> PostGames(int tournamentId, GameCreateDto gameDto)
@@ -52,17 +39,10 @@ public class GamesController(IServiceManager serviceManager) : ControllerBase
     }
 
     [HttpPatch("{id}")]
-    public async Task<IActionResult> PatchGame(int tournamentId, int id, JsonPatchDocument<GameEditDto> patchDoc)
-    {
-        var response = await serviceManager.GameService.UpdateAsync(tournamentId, id, patchDoc);
-        return this.HandleApiResponse(response);
-    }
+    public async Task<IActionResult> PatchGame(int tournamentId, int id, JsonPatchDocument<GameEditDto> patchDoc) =>
+        this.HandleApiResponse(await serviceManager.GameService.UpdateAsync(tournamentId, id, patchDoc));
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteGames(int tournamentId, int id)
-    {
-        var response = await serviceManager.GameService.DeleteAsync(tournamentId, id);
-        return this.HandleApiResponse(response);
-    }
-
+    public async Task<IActionResult> DeleteGames(int tournamentId, int id) =>
+        this.HandleApiResponse(await serviceManager.GameService.DeleteAsync(tournamentId, id));
 }

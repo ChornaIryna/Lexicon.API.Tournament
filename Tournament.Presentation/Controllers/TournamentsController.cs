@@ -13,25 +13,16 @@ namespace Tournament.Presentation.Controllers;
 public class TournamentsController(IServiceManager serviceManager) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<TournamentDto>>> GetTournaments([FromQuery] QueryParameters queryParameters, [FromQuery] bool includeGames = false)
-    {
-        var response = await serviceManager.TournamentService.GetAllAsync(queryParameters, includeGames);
-        return this.HandleApiResponse(response);
-    }
+    public async Task<ActionResult<IEnumerable<TournamentDto>>> GetTournaments([FromQuery] QueryParameters queryParameters, [FromQuery] bool includeGames = false) =>
+        this.HandleApiResponse(await serviceManager.TournamentService.GetAllAsync(queryParameters, includeGames));
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<TournamentDto>> GetTournamentDetails(int id, [FromQuery] bool includeGames = false)
-    {
-        var response = await serviceManager.TournamentService.GetByIdAsync(id, includeGames);
-        return this.HandleApiResponse(response);
-    }
+    public async Task<ActionResult<TournamentDto>> GetTournamentDetails(int id, [FromQuery] bool includeGames = false) =>
+        this.HandleApiResponse(await serviceManager.TournamentService.GetByIdAsync(id, includeGames));
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> PutTournamentDetails(int id, TournamentEditDto tournamentDto)
-    {
-        var response = await serviceManager.TournamentService.UpdateAsync(id, tournamentDto);
-        return this.HandleApiResponse(response);
-    }
+    public async Task<IActionResult> PutTournamentDetails(int id, TournamentEditDto tournamentDto) =>
+        this.HandleApiResponse(await serviceManager.TournamentService.UpdateAsync(id, tournamentDto));
 
     [HttpPost]
     public async Task<ActionResult<TournamentDto>> PostTournamentDetails(TournamentCreateDto tournamentDto)
@@ -43,16 +34,10 @@ public class TournamentsController(IServiceManager serviceManager) : ControllerB
     }
 
     [HttpPatch("{id:int}")]
-    public async Task<IActionResult> PatchTournamentDetails(int id, JsonPatchDocument<TournamentEditDto> patchDoc)
-    {
-        var response = await serviceManager.TournamentService.UpdateAsync(id, patchDoc);
-        return this.HandleApiResponse(response);
-    }
+    public async Task<IActionResult> PatchTournamentDetails(int id, JsonPatchDocument<TournamentEditDto> patchDoc) =>
+        this.HandleApiResponse(await serviceManager.TournamentService.UpdateAsync(id, patchDoc));
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteTournamentDetails(int id)
-    {
-        var response = await serviceManager.TournamentService.DeleteAsync(id);
-        return this.HandleApiResponse(response);
-    }
+    public async Task<IActionResult> DeleteTournamentDetails(int id) =>
+        this.HandleApiResponse(await serviceManager.TournamentService.DeleteAsync(id));
 }
