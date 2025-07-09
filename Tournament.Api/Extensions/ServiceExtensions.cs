@@ -36,9 +36,11 @@ public static class ServiceExtensions
 
         services.AddScoped<ITournamentService, TournamentService>();
         services.AddScoped<IGameService, GameService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         services.AddLazy<ITournamentService>();
         services.AddLazy<IGameService>();
+        services.AddLazy<IAuthService>();
     }
     public static void ConfigureRepositories(this IServiceCollection services)
     {

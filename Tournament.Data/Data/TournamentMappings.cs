@@ -7,11 +7,14 @@ public class TournamentMappings : Profile
 {
     public TournamentMappings()
     {
+        #region Tournaments
         CreateMap<TournamentDto, TournamentDetails>()
             .ReverseMap();
+
         CreateMap<TournamentWithGamesDto, TournamentDetails>()
             .ForMember(target => target.Games, config => config.AllowNull())
             .ReverseMap();
+
         CreateMap<TournamentCreateDto, TournamentDetails>()
             .ForMember(target => target.Games, config => config.AllowNull())
             .ForMember(target => target.StartDate,
@@ -20,6 +23,7 @@ public class TournamentMappings : Profile
                                              ? DateTime.Now
                                              : src.StartDate))
             .ReverseMap();
+
         CreateMap<TournamentEditDto, TournamentDetails>()
             .ForMember(target => target.Games, config => config.AllowNull())
             .ForMember(target => target.StartDate,
@@ -28,9 +32,12 @@ public class TournamentMappings : Profile
                                              ? destination.StartDate
                                              : src.StartDate))
             .ReverseMap();
+        #endregion
 
+        #region Games
         CreateMap<GameDto, Game>()
             .ReverseMap();
+
         CreateMap<GameCreateDto, Game>()
             .ForMember(target => target.Time,
                         opt => opt.MapFrom((src, destination) =>
@@ -38,6 +45,7 @@ public class TournamentMappings : Profile
                                              ? DateTime.Now
                                              : src.Time))
             .ReverseMap();
+
         CreateMap<GameEditDto, Game>()
             .ForMember(target => target.Time,
                         opt => opt.MapFrom((src, destination) =>
@@ -45,5 +53,12 @@ public class TournamentMappings : Profile
                                              ? destination.Time
                                              : src.Time))
             .ReverseMap();
+        #endregion
+
+        #region ApplicationUser
+        CreateMap<ApplicationUser, UserRegistrationDto>()
+            .ReverseMap();
+        #endregion
+
     }
 }

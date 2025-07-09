@@ -1,5 +1,5 @@
 ﻿namespace Tournament.Shared.DTOs;
-public class QueryParameters
+public record QueryParameters
 {
     private const int MaxPageSize = 100;
     private int _pageSize = 20;
