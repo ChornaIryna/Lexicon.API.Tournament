@@ -14,6 +14,11 @@ public class TournamentMappings : Profile
             .ReverseMap();
         CreateMap<TournamentCreateDto, TournamentDetails>()
             .ForMember(target => target.Games, config => config.AllowNull())
+            .ForMember(target => target.StartDate,
+                        opt => opt.MapFrom((src, destination) =>
+                                             src.StartDate == default
+                                             ? DateTime.Now
+                                             : src.StartDate))
             .ReverseMap();
         CreateMap<TournamentEditDto, TournamentDetails>()
             .ForMember(target => target.Games, config => config.AllowNull())
@@ -27,6 +32,11 @@ public class TournamentMappings : Profile
         CreateMap<GameDto, Game>()
             .ReverseMap();
         CreateMap<GameCreateDto, Game>()
+            .ForMember(target => target.Time,
+                        opt => opt.MapFrom((src, destination) =>
+                                             src.Time == default
+                                             ? DateTime.Now
+                                             : src.Time))
             .ReverseMap();
         CreateMap<GameEditDto, Game>()
             .ForMember(target => target.Time,
