@@ -64,9 +64,11 @@ public class GameService(IUoW unitOfWork, IMapper mapper) : ServiceBase, IGameSe
         if (!ValidateEntity(gameDto, out var errors))
             return CreateErrorResponse<GameDto>(StatusCodes.Status400BadRequest, "Invalid game data", errors);
 
-
         if (!await unitOfWork.TournamentRepository.AnyAsync(tournamentId))
             return CreateErrorResponse<GameDto>(StatusCodes.Status404NotFound, $"Tournament with Id '{tournamentId}' was not found.");
+
+        if (await unitOfWork.TournamentRepository.CountGamesAsync(tournamentId) >= 10)
+            return CreateErrorResponse<GameDto>(StatusCodes.Status400BadRequest, "Cannot create more than 10 games for a tournament.");
 
         var game = mapper.Map<Game>(gameDto);
         game.TournamentDetailsId = tournamentId;

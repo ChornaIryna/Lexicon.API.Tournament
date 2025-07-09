@@ -27,4 +27,6 @@ public class TournamentRepository(TournamentContext tournamentContext) : BaseRep
                     .AsNoTracking()
                     .Include(t => t.Games)
                     .FirstOrDefaultAsync(t => t.Id == id);
+    public async Task<int> CountGamesAsync(int tournamentId) =>
+        await Context.Games.CountAsync(g => g.TournamentDetailsId == tournamentId);
 }
