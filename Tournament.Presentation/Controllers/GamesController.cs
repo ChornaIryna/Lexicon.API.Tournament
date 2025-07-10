@@ -7,7 +7,7 @@ using Tournament.Presentation.Extensions;
 using Tournament.Shared.DTOs;
 
 namespace Tournament.Presentation.Controllers;
-[AllowAnonymous]
+[Authorize]
 [Route("api/tournaments/{tournamentId:int}/[controller]")]
 [ApiController]
 public class GamesController(IServiceManager serviceManager) : ControllerBase

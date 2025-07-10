@@ -14,4 +14,9 @@ public class AuthController(IServiceManager serviceManager) : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> RegisterAsync([FromBody] UserRegistrationDto registrationDto) =>
         this.HandleApiResponse(await serviceManager.AuthService.RegisterAsync(registrationDto));
+
+    [AllowAnonymous]
+    [HttpPost("login")]
+    public async Task<IActionResult> LoginAsync([FromBody] UserLoginDto loginDto) =>
+        this.HandleApiResponse(await serviceManager.AuthService.IsUserAuthenticatedAsync(loginDto));
 }

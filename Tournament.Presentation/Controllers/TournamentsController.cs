@@ -7,7 +7,7 @@ using Tournament.Shared.DTOs;
 
 namespace Tournament.Presentation.Controllers;
 
-[AllowAnonymous] // Allow anonymous access to the API for demonstration purposes; adjust as needed for security.
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class TournamentsController(IServiceManager serviceManager) : ControllerBase

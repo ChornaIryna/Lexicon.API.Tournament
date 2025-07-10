@@ -24,5 +24,5 @@ public interface IAuthService
     //Task<string> GetUserAgeByIdAsync(string userId);
     //Task<bool> IsUserInRoleByIdAsync(string userId, string role);
 
-    //Task<bool> IsUserAuthenticatedByIdAsync(string userId);
+    Task<ApiResponse<string>> IsUserAuthenticatedAsync(UserLoginDto userLoginDto);
 }
