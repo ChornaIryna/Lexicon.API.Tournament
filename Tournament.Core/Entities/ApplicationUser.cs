@@ -10,4 +10,6 @@ public class ApplicationUser : IdentityUser
     [Range(18, 100, ErrorMessage = "Age must be between 18 and 100")]
     public int Age { get; set; }
     public string? Position { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpireTime { get; set; }
 }
