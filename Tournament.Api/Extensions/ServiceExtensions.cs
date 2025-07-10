@@ -1,5 +1,8 @@
-﻿using Service.Contracts.Interfaces;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Service.Contracts.Interfaces;
 using System.Reflection.Metadata;
+using Tournament.Core.Configuration;
 using Tournament.Core.Repositories;
 using Tournament.Data.Repositories;
 using Tournament.Services.Implementations;
@@ -51,5 +54,44 @@ public static class ServiceExtensions
 
         services.AddLazy<ITournamentRepository>();
         services.AddLazy<IGameRepository>();
+    }
+
+    public static void ConfigureAuthenticationWithJwtBearer(this IServiceCollection services, IConfiguration configuration)
+    {
+        var jwtSettings = configuration.GetSection("JwTSettings");
+        ArgumentNullException.ThrowIfNull(nameof(jwtSettings));
+
+        var key = jwtSettings["Key"];
+        ArgumentNullException.ThrowIfNull(nameof(key));
+
+        var jwtConfiguration = new JwtConfiguration();
+        jwtSettings.Bind(jwtConfiguration);
+
+        services.Configure<JwtConfiguration>(options =>
+        {
+            options.Issuer = jwtConfiguration.Issuer;
+            options.Audience = jwtConfiguration.Audience;
+            options.Key = jwtConfiguration.Key;
+            options.ExpirationsMinutes = jwtConfiguration.ExpirationsMinutes;
+        });
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings["Issuer"],
+                ValidAudience = jwtSettings["Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(key!))
+            };
+        });
     }
 }
