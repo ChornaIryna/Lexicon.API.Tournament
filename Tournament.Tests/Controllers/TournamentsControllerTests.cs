@@ -1,152 +1,349 @@
-﻿using AutoMapper;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Tournament.Api.Controllers;
-using Tournament.Core.DTOs;
-using Tournament.Core.Entities;
-using Tournament.Core.Repositories;
+using Service.Contracts.Interfaces;
+using Tournament.Presentation.Controllers;
+using Tournament.Shared.DTOs;
+using Tournament.Shared.Responses;
+using Tournament.Tests.Helpers;
 
 namespace Tournament.Tests.Controllers;
 public class TournamentsControllerTests
 {
-    private readonly Mock<IMapper> _mapperMock;
-    private readonly Mock<IUoW> _uowMock;
-    private readonly Mock<ITournamentRepository> _tournamentRepoMock;
+    private readonly Mock<IServiceManager> _mockServiceManager;
+    private readonly Mock<ITournamentService> _mockTournamentService;
     private readonly TournamentsController _controller;
 
     public TournamentsControllerTests()
     {
-        _mapperMock = new Mock<IMapper>();
-        _uowMock = new Mock<IUoW>();
-        _tournamentRepoMock = new Mock<ITournamentRepository>();
-        _uowMock.Setup(u => u.TournamentRepository).Returns(_tournamentRepoMock.Object);
-        _controller = new TournamentsController(_mapperMock.Object, _uowMock.Object);
+        _mockServiceManager = new Mock<IServiceManager>();
+        _mockTournamentService = new Mock<ITournamentService>();
+
+        _mockServiceManager.Setup(sm => sm.TournamentService).Returns(_mockTournamentService.Object);
+
+        _controller = new TournamentsController(_mockServiceManager.Object);
+
+        _controller.ControllerContext = new ControllerContext()
+        {
+            HttpContext = new DefaultHttpContext()
+        };
     }
 
     [Fact]
     public async Task GetTournaments_WhenNoTournaments_ReturnsNotFound()
     {
         // Arrange
-        _tournamentRepoMock.Setup(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<bool>()))
-            .ReturnsAsync(new List<TournamentDetails>());
+        var queryParameters = TournamentData.GetQueryParameters();
+        var errorResponse = new ApiResponse<IEnumerable<TournamentDto>>
+        {
+            Success = false,
+            Status = StatusCodes.Status404NotFound,
+            Message = "No tournaments found"
+        };
+
+        _mockTournamentService.Setup(s => s.GetAllAsync(queryParameters, false))
+            .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.GetTournaments(new QueryParameters());
+        var result = await _controller.GetTournaments(queryParameters, false);
 
         // Assert
-        Assert.IsType<NotFoundObjectResult>(result.Result);
+        var actionResult = Assert.IsType<ActionResult<IEnumerable<TournamentDto>>>(result);
+        var statusCodeResult = Assert.IsType<ObjectResult>(actionResult.Result);
+        Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
+        _mockTournamentService.Verify(s => s.GetAllAsync(queryParameters, false), Times.Once);
     }
 
     [Fact]
     public async Task GetTournaments_WithValidData_ReturnsOkResult()
     {
         // Arrange
-        var tournaments = new List<TournamentDetails>
+        var queryParameters = TournamentData.GetQueryParameters();
+        var tournaments = TournamentData.GetTournamentDtos(3);
+        var successResponse = new ApiResponse<IEnumerable<TournamentDto>>
         {
-            new() { Id = 1, Title = "Tournament 1" },
-            new() { Id = 2, Title = "Tournament 2" }
+            Success = true,
+            Status = StatusCodes.Status200OK,
+            Data = tournaments,
+            Message = "Tournaments retrieved successfully",
+            MetaData = new { TotalCount = 3, CurrentPage = 1, NumberOfEntitiesOnPage = 10, TotalPages = 1 }
         };
 
-        var tournamentDtos = new List<TournamentDto>
-        {
-            new() { Title = "Tournament 1" },
-            new() { Title = "Tournament 2" }
-        };
-
-        _tournamentRepoMock.Setup(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<bool>()))
-            .ReturnsAsync(tournaments);
-        _mapperMock.Setup(m => m.Map<IEnumerable<TournamentDto>>(It.IsAny<IEnumerable<TournamentDetails>>()))
-            .Returns(tournamentDtos);
+        _mockTournamentService.Setup(s => s.GetAllAsync(queryParameters, false))
+            .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.GetTournaments(new QueryParameters());
+        var result = await _controller.GetTournaments(queryParameters, false);
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var returnedTournaments = Assert.IsAssignableFrom<IEnumerable<TournamentDto>>(okResult.Value);
-        Assert.Equal(2, returnedTournaments.Count());
+        var actionResult = Assert.IsType<ActionResult<IEnumerable<TournamentDto>>>(result);
+        var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+        var returnValue = Assert.IsAssignableFrom<IEnumerable<TournamentDto>>(okResult.Value);
+        Assert.Equal(3, System.Linq.Enumerable.Count(returnValue));
+        _mockTournamentService.Verify(s => s.GetAllAsync(queryParameters, false), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetTournamentDetails_WithValidId_ReturnsOkResult()
+    {
+        // Arrange
+        var tournamentId = 1;
+        var tournamentDto = TournamentData.GetTournamentDto(tournamentId);
+        var successResponse = new ApiResponse<TournamentDto>
+        {
+            Success = true,
+            Status = StatusCodes.Status200OK,
+            Data = tournamentDto,
+            Message = "Tournament retrieved successfully"
+        };
+
+        _mockTournamentService.Setup(s => s.GetByIdAsync(tournamentId, false))
+            .ReturnsAsync(successResponse);
+
+        // Act
+        var result = await _controller.GetTournamentDetails(tournamentId, false);
+
+        // Assert
+        var actionResult = Assert.IsType<ActionResult<TournamentDto>>(result);
+        var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+        var returnValue = Assert.IsType<TournamentDto>(okResult.Value);
+        Assert.Equal(tournamentDto.Title, returnValue.Title);
+        _mockTournamentService.Verify(s => s.GetByIdAsync(tournamentId, false), Times.Once);
+
     }
 
     [Fact]
     public async Task GetTournamentDetails_WithInvalidId_ReturnsNotFound()
     {
         // Arrange
-        _tournamentRepoMock.Setup(repo => repo.FindByIdAsync(It.IsAny<int>(), It.IsAny<bool>()))
-            .ReturnsAsync((TournamentDetails?)null);
+        var tournamentId = 999;
+        var errorResponse = new ApiResponse<TournamentDto>
+        {
+            Success = false,
+            Status = StatusCodes.Status404NotFound,
+            Message = $"Tournament with id '{tournamentId}' was not found"
+        };
+
+        _mockTournamentService.Setup(s => s.GetByIdAsync(tournamentId, false))
+            .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.GetTournamentDetails(1);
+        var result = await _controller.GetTournamentDetails(tournamentId, false);
 
         // Assert
-        Assert.IsType<NotFoundObjectResult>(result.Result);
+        var actionResult = Assert.IsType<ActionResult<TournamentDto>>(result);
+        var statusCodeResult = Assert.IsType<ObjectResult>(actionResult.Result);
+        Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
+        _mockTournamentService.Verify(s => s.GetByIdAsync(tournamentId, false), Times.Once);
     }
 
     [Fact]
     public async Task PutTournamentDetails_WithValidData_ReturnsNoContent()
     {
         // Arrange
-        var tournamentDto = new TournamentEditDto { Id = 1, Title = "Updated Tournament" };
-        var tournament = new TournamentDetails { Id = 1, Title = "Tournament" };
+        var tournamentId = 1;
+        var tournamentEditDto = TournamentData.GetTournamentEditDto(tournamentId);
+        var successResponse = new ApiResponse<object>
+        {
+            Success = true,
+            Status = StatusCodes.Status204NoContent,
+            Message = "Tournament updated successfully"
+        };
 
-        _tournamentRepoMock.Setup(repo => repo.FindByIdAsync(1, true))
-            .ReturnsAsync(tournament);
-        _tournamentRepoMock.Setup(repo => repo.AnyAsync(1))
-            .ReturnsAsync(true);
-        _uowMock.Setup(u => u.HasChanges()).Returns(true);
+        _mockTournamentService.Setup(s => s.UpdateAsync(tournamentId, tournamentEditDto))
+            .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.PutTournamentDetails(1, tournamentDto);
+        var result = await _controller.PutTournamentDetails(tournamentId, tournamentEditDto);
 
         // Assert
-        Assert.IsType<NoContentResult>(result);
+        var noContentResult = Assert.IsType<NoContentResult>(result);
+        Assert.Equal(StatusCodes.Status204NoContent, noContentResult.StatusCode);
+        _mockTournamentService.Verify(s => s.UpdateAsync(tournamentId, tournamentEditDto), Times.Once);
+    }
+
+    [Fact]
+    public async Task PutTournamentDetails_WithInvalidId_ReturnsBadRequest()
+    {// Arrange
+        var tournamentId = 1;
+        var tournamentEditDto = TournamentData.GetTournamentEditDto(2); // Mismatched ID
+        var errorResponse = new ApiResponse<object>
+        {
+            Success = false,
+            Status = StatusCodes.Status400BadRequest,
+            Message = "Invalid tournament ID"
+        };
+
+        _mockTournamentService.Setup(s => s.UpdateAsync(tournamentId, tournamentEditDto))
+            .ReturnsAsync(errorResponse);
+
+        // Act
+        var result = await _controller.PutTournamentDetails(tournamentId, tournamentEditDto);
+
+        // Assert
+        var statusCodeResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, statusCodeResult.StatusCode);
+        _mockTournamentService.Verify(s => s.UpdateAsync(tournamentId, tournamentEditDto), Times.Once);
     }
 
     [Fact]
     public async Task PostTournamentDetails_WithValidData_ReturnsCreatedAtAction()
     {
         // Arrange
-        var createDto = new TournamentCreateDto { Title = "New Tournament" };
-        var tournament = new TournamentDetails { Id = 1, Title = "New Tournament" };
-        var tournamentDto = new TournamentDto { Title = "New Tournament" };
+        var tournamentCreateDto = TournamentData.GetTournamentCreateDto();
+        var createdTournamentDto = new TournamentDto
+        {
+            Title = tournamentCreateDto.Title,
+            StartDate = tournamentCreateDto.StartDate,
+            EndDate = tournamentCreateDto.StartDate.AddMonths(3)
+        };
+        var successResponse = new ApiResponse<TournamentDto>
+        {
+            Success = true,
+            Status = StatusCodes.Status201Created,
+            Data = createdTournamentDto,
+            Message = "Tournament created successfully"
+        };
 
-        _mapperMock.Setup(m => m.Map<TournamentDetails>(createDto))
-            .Returns(tournament);
-        _mapperMock.Setup(m => m.Map<TournamentDto>(tournament))
-            .Returns(tournamentDto);
+        _mockTournamentService.Setup(s => s.CreateAsync(tournamentCreateDto))
+            .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.PostTournamentDetails(createDto);
+        var result = await _controller.PostTournamentDetails(tournamentCreateDto);
 
         // Assert
-        var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
-        Assert.Equal(nameof(TournamentsController.GetTournamentDetails), createdAtActionResult.ActionName);
+        var actionResult = Assert.IsType<ActionResult<TournamentDto>>(result);
+        var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
+        Assert.Equal(nameof(TournamentsController.GetTournaments), createdAtActionResult.ActionName);
+        Assert.Equal(createdTournamentDto, createdAtActionResult.Value);
+        _mockTournamentService.Verify(s => s.CreateAsync(tournamentCreateDto), Times.Once);
+
     }
+
+    [Fact]
+    public async Task PostTournamentDetails_WithInvalidData_ReturnsBadRequest()
+    {
+        // Arrange
+        var tournamentCreateDto = TournamentData.GetTournamentCreateDto(string.Empty);//invalid Title
+        var errorResponse = new ApiResponse<TournamentDto>
+        {
+            Success = false,
+            Status = StatusCodes.Status400BadRequest,
+            Message = "Validation failed",
+            Errors = new List<string> { "The Title field is required." }
+        };
+
+        _mockTournamentService.Setup(s => s.CreateAsync(tournamentCreateDto))
+            .ReturnsAsync(errorResponse);
+
+        // Act
+        var result = await _controller.PostTournamentDetails(tournamentCreateDto);
+
+        // Assert
+        var actionResult = Assert.IsType<ActionResult<TournamentDto>>(result);
+        var statusCodeResult = Assert.IsType<ObjectResult>(actionResult.Result);
+        Assert.Equal(StatusCodes.Status400BadRequest, statusCodeResult.StatusCode);
+        _mockTournamentService.Verify(s => s.CreateAsync(tournamentCreateDto), Times.Once);
+
+    }
+
 
     [Fact]
     public async Task DeleteTournamentDetails_WithValidId_ReturnsNoContent()
     {
         // Arrange
-        var tournament = new TournamentDetails { Id = 1, Title = "Tournament" };
-        _tournamentRepoMock.Setup(repo => repo.FindByIdAsync(1, false))
-            .ReturnsAsync(tournament);
+        var tournamentId = 1;
+        var successResponse = new ApiResponse<object>
+        {
+            Success = true,
+            Status = StatusCodes.Status204NoContent,
+            Message = "Tournament deleted successfully"
+        };
+
+        _mockTournamentService.Setup(s => s.DeleteAsync(tournamentId))
+            .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.DeleteTournamentDetails(1);
+        var result = await _controller.DeleteTournamentDetails(tournamentId);
 
         // Assert
-        Assert.IsType<NoContentResult>(result);
-        _tournamentRepoMock.Verify(repo => repo.Remove(tournament), Times.Once);
+        var noContentResult = Assert.IsType<NoContentResult>(result);
+        Assert.Equal(StatusCodes.Status204NoContent, noContentResult.StatusCode);
+        _mockTournamentService.Verify(s => s.DeleteAsync(tournamentId), Times.Once);
     }
 
     [Fact]
     public async Task DeleteTournamentDetails_WithInvalidId_ReturnsNotFound()
     {
         // Arrange
-        _tournamentRepoMock.Setup(repo => repo.FindByIdAsync(It.IsAny<int>(), It.IsAny<bool>()))
-            .ReturnsAsync((TournamentDetails?)null);
+        var tournamentId = 999;
+        var errorResponse = new ApiResponse<object>
+        {
+            Success = false,
+            Status = StatusCodes.Status404NotFound,
+            Message = $"Tournament with id '{tournamentId}' was not found"
+        };
+
+        _mockTournamentService.Setup(s => s.DeleteAsync(tournamentId))
+            .ReturnsAsync(errorResponse);
+
         // Act
-        var result = await _controller.DeleteTournamentDetails(1);
+        var result = await _controller.DeleteTournamentDetails(tournamentId);
+
         // Assert
-        Assert.IsType<NotFoundObjectResult>(result);
+        var statusCodeResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
+        _mockTournamentService.Verify(s => s.DeleteAsync(tournamentId), Times.Once);
+    }
+
+    [Fact]
+    public async Task PatchTournamentDetails_OnSuccessfulPatch_ReturnsNoContent()
+    {
+        // Arrange
+        var tournamentId = 1;
+        var patchDoc = TournamentData.GetTournamentJsonPatchDocument(tournamentId, "New Patched Title");
+        var successResponse = new ApiResponse<TournamentDto>
+        {
+            Success = true,
+            Status = StatusCodes.Status200OK,
+            Data = TournamentData.GetTournamentDto(tournamentId),
+            Message = "Tournament updated successfully"
+        };
+
+        _mockTournamentService.Setup(s => s.UpdateAsync(tournamentId, patchDoc))
+            .ReturnsAsync(successResponse);
+
+        // Act
+        var result = await _controller.PatchTournamentDetails(tournamentId, patchDoc);
+
+        // Assert
+        var okObjectResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(StatusCodes.Status200OK, okObjectResult.StatusCode);
+        _mockTournamentService.Verify(s => s.UpdateAsync(tournamentId, patchDoc), Times.Once);
+    }
+
+    [Fact]
+    public async Task PatchTournamentDetails_WithInvalidTournamentId_ReturnsNotFound()
+    {
+        // Arrange
+        var tournamentId = 999;
+        var patchDoc = TournamentData.GetTournamentJsonPatchDocument(tournamentId, "New Patched Title");
+        var errorResponse = new ApiResponse<TournamentDto>
+        {
+            Success = false,
+            Status = StatusCodes.Status404NotFound,
+            Message = $"Tournament with id '{tournamentId}' was not found"
+        };
+
+        _mockTournamentService.Setup(s => s.UpdateAsync(tournamentId, patchDoc))
+            .ReturnsAsync(errorResponse);
+
+        // Act
+        var result = await _controller.PatchTournamentDetails(tournamentId, patchDoc);
+
+        // Assert
+        var statusCodeResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
+        _mockTournamentService.Verify(s => s.UpdateAsync(tournamentId, patchDoc), Times.Once);
     }
 }
