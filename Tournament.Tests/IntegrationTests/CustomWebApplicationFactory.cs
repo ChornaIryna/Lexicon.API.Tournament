@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,6 +17,16 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            config.Sources.Clear();
+            config.SetBasePath(Directory.GetCurrentDirectory())
+                  .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                  .AddEnvironmentVariables();
+            if (context.HostingEnvironment.IsDevelopment())
+                config.AddJsonFile("appsettings.Development.json", optional: true);
+        });
+
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll(typeof(DbContextOptions<TournamentContext>));
@@ -44,8 +56,12 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
     /// </summary>
     public string GenerateJwtToken(string userId, string userName, string? role = null)
     {
-        var jwtSettingsKey = "super-secret-key-that-is-at-least-32-characters-long";
+        var scope = Services.CreateScope();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
+        var jwtSettings = configuration.GetSection("JwTSettings");
+        var secretKey = jwtSettings["Key"];
+        ArgumentNullException.ThrowIfNull(secretKey);
         var claims = new List<Claim>
         {
             new (ClaimTypes.NameIdentifier, userId),
@@ -58,14 +74,14 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettingsKey));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: "TournamentIssuer",
-            audience: "https://localhost:7282",
+            issuer: jwtSettings["Issuer"],
+            audience: jwtSettings["Audience"],
             claims: claims,
-            expires: DateTime.Now.AddMinutes(60),
+            expires: DateTime.Now.AddMinutes(double.Parse(jwtSettings["ExpirationMinutes"] ?? "5")),
             signingCredentials: creds
         );
 
