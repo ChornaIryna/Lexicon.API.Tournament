@@ -16,8 +16,9 @@ public static class ApplicationBuilderExtensions
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        if (context.Database.IsRelational())
+            await context.Database.MigrateAsync();
 
-        await context.Database.MigrateAsync();
         await SeedRolesAsync(roleManager);
         if (environment.IsDevelopment())
         {
