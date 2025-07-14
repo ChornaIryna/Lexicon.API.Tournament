@@ -8,4 +8,5 @@ public interface IAuthService
     Task<ApiResponse<IdentityResult>> RegisterAsync(UserRegistrationDto registrationDto);
     Task<ApiResponse<TokenDto>> IsUserAuthenticatedAsync(UserLoginDto userLoginDto);
     Task<ApiResponse<TokenDto>> RefreshTokenAsync(TokenDto tokenDto);
+    Task<ApiResponse<object>> EditAdminRole(UserRolesEditDto userEditDto);
 }

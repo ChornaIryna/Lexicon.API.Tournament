@@ -4,7 +4,7 @@ using Newtonsoft.Json.Serialization;
 using Tournament.Shared.DTOs;
 
 namespace Tournament.Tests.Helpers;
-public static class TournamentData
+internal static class TournamentData
 {
     public static List<TournamentDto> GetTournamentDtos(int count)
     {

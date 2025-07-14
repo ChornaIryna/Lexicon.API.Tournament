@@ -31,7 +31,7 @@ public static class ApplicationBuilderExtensions
             }
 
             if (!context.Users.Any())
-                await new SeedData<ApplicationUser>(context).GenerateAdminUserAsync(configuration, userManager);
+                await new SeedData<ApplicationUser>(context).GenerateUsersAsync(configuration, userManager);
         }
 
     }

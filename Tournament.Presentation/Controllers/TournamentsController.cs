@@ -7,9 +7,9 @@ using Tournament.Shared.DTOs;
 
 namespace Tournament.Presentation.Controllers;
 
+[ApiController]
 [Authorize]
 [Route("api/[controller]")]
-[ApiController]
 public class TournamentsController(IServiceManager serviceManager) : ControllerBase
 {
     [HttpGet]
@@ -17,6 +17,7 @@ public class TournamentsController(IServiceManager serviceManager) : ControllerB
         this.HandleApiResponse(await serviceManager.TournamentService.GetAllAsync(queryParameters, includeGames));
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "User,Admin")]
     public async Task<ActionResult<TournamentDto>> GetTournamentDetails(int id, [FromQuery] bool includeGames = false) =>
         this.HandleApiResponse(await serviceManager.TournamentService.GetByIdAsync(id, includeGames));
 

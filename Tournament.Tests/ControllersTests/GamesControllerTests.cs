@@ -8,7 +8,7 @@ using Tournament.Shared.DTOs;
 using Tournament.Shared.Responses;
 using Tournament.Tests.Helpers;
 
-namespace Tournament.Tests.Controllers;
+namespace Tournament.Tests.ControllersTests;
 
 public class GamesControllerTests
 {

@@ -87,6 +87,44 @@ public class AuthService(IMapper mapper, UserManager<ApplicationUser> userManage
 
     }
 
+    public async Task<ApiResponse<object>> EditAdminRole(UserRolesEditDto userRolesEditDto)
+    {
+        const string AdminRole = "Admin";
+
+        ArgumentNullException.ThrowIfNull(nameof(userRolesEditDto));
+
+        if (string.IsNullOrWhiteSpace(userRolesEditDto.UserName))
+            return CreateErrorResponse<object>(StatusCodes.Status400BadRequest, "User name not be empty.");
+
+        user = await userManager.FindByNameAsync(userRolesEditDto.UserName);
+        if (user == null)
+            return CreateErrorResponse<object>(StatusCodes.Status404NotFound, "User not found.");
+
+        try
+        {
+            await UpdateUserRoleAsync(user, AdminRole, userRolesEditDto.IsAdmin);
+            return CreateSuccessResponse<object>(null, StatusCodes.Status204NoContent, "Roles updated successfully.");
+        }
+        catch (Exception ex)
+        {
+            return CreateErrorResponse<object>(StatusCodes.Status400BadRequest, "Error Occurred on role update.", [ex.Message]);
+        }
+    }
+
+    private async Task UpdateUserRoleAsync(ApplicationUser user, string roleName, bool shouldHaveRole)
+    {
+        var isInRole = await userManager.IsInRoleAsync(user, roleName);
+
+        if (shouldHaveRole && !isInRole)
+        {
+            await userManager.AddToRoleAsync(user, roleName);
+        }
+        else if (!shouldHaveRole && isInRole)
+        {
+            await userManager.RemoveFromRoleAsync(user, roleName);
+        }
+    }
+
     private ClaimsPrincipal GetPrincipalFromExpiredToken(string accessToken)
     {
         var jwtSettings = configuration.GetSection("JwTSettings");
@@ -174,4 +212,5 @@ public class AuthService(IMapper mapper, UserManager<ApplicationUser> userManage
         var secret = new SymmetricSecurityKey(data);
         return new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
     }
+
 }

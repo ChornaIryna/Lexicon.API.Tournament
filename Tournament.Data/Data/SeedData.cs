@@ -22,29 +22,45 @@ public class SeedData<T>(TournamentContext context) where T : class
         }
     }
 
-    public async Task GenerateAdminUserAsync(IConfiguration configuration, UserManager<ApplicationUser> userManager)
+    public async Task GenerateUsersAsync(IConfiguration configuration, UserManager<ApplicationUser> userManager)
     {
-        var adminUser = new ApplicationUser
-        {
-            Name = "Admin",
-            Age = 20,
-            Position = "Admin in Development",
-            Email = "admin@test.email",
-            UserName = $"admin@test.email",
-        };
-
         var password = configuration["DefaultAdminPassword"];
-
-        if (adminUser is ApplicationUser user)
-        {
-            var result = await userManager.CreateAsync(user, password!);
-            if (result.Succeeded)
-                await userManager.AddToRoleAsync(user, "Admin");
-            else
-                Console.WriteLine($"Error creating admin user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-        }
+        List<ApplicationUser> users =
+        [
+            new()
+            {
+                Name = "Admin",
+                Age = 20,
+                Position = "Admin in Development",
+                Email = "admin@test.email",
+                UserName = $"admin@test.email",
+            },
+            new()
+            {
+                Name = "Regular User",
+                Age = 50,
+                Email = "user@test.email",
+                UserName = $"user@test.email"
+            }
+        ];
+        foreach (ApplicationUser user in users)
+            await CreateUserAsync(userManager, password, user);
     }
 
+    private static async Task CreateUserAsync(UserManager<ApplicationUser> userManager, string? password, ApplicationUser user)
+    {
+        var result = await userManager.CreateAsync(user, password!);
+        if (result.Succeeded)
+        {
+            if (!string.IsNullOrEmpty(user.Position))
+                await userManager.AddToRoleAsync(user, "Admin");
+            else
+                await userManager.AddToRoleAsync(user, "User");
+        }
+
+        else
+            Console.WriteLine($"Error occurred when creating user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+    }
 
     private async Task<T?> CreateEntityAsync(int index)
     {
