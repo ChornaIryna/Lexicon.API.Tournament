@@ -92,6 +92,25 @@ public static class ServiceExtensions
                 ValidAudience = jwtSettings["Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(key!))
             };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnChallenge = async context =>
+                {
+                    context.HandleResponse();
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+                    var result = new { message = "Authentication required or token is invalid/expired.", errors = context.ErrorDescription };
+                    await context.Response.WriteAsJsonAsync(result);
+                },
+                OnForbidden = async context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    context.Response.ContentType = "application/json";
+                    var result = new { message = "You do not have permission to access this resource." };
+                    await context.Response.WriteAsJsonAsync(result);
+                }
+            };
         });
     }
 }
