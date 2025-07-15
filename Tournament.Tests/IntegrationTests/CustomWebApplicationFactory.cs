@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -23,8 +22,8 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
             config.SetBasePath(Directory.GetCurrentDirectory())
                   .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                   .AddEnvironmentVariables();
-            if (context.HostingEnvironment.IsDevelopment())
-                config.AddJsonFile("appsettings.Development.json", optional: true);
+            config.AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+            config.AddUserSecrets(typeof(CustomWebApplicationFactory<TProgram>).Assembly);
         });
 
         builder.ConfigureTestServices(services =>
