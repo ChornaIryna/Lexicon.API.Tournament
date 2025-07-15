@@ -32,7 +32,7 @@
     ```
 
 2.  **Update Configuration Settings:**
-    Open `appsettings.json` (or `appsettings.Development.json`) and configure your database connection string and JwT:
+    Open `appsettings.json` (or `appsettings.Development.json`) in Tournament.API and Tournament.Tests  and configure your database connection string and JwT:
     ```json
     "ConnectionStrings": {
       "TournamentContext": "Server=(localdb)\\mssqllocaldb;Database=TournamentDb;Trusted_Connection=True;MultipleActiveResultSets=true"
@@ -41,7 +41,7 @@
       "JwTSettings": {
         "Issuer": "YourIssuer",
         "Audience": "YourAudience", // Ensure this matches your API's base URL
-        "Key": "super-secret-key-that-is-at-least-32-characters-long", // **IMPORTANT: Generate a strong, unique secret key** (change it in "..\Tournament.Tests\IntegrationTests\CustomWebApplicationFactory.cs")
+        "Key": "super-secret-key-that-is-at-least-32-characters-long", // **IMPORTANT: Generate a strong, unique secret key**
         "ExpirationMinutes": 60
       }
     }
