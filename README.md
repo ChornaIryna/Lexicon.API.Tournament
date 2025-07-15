@@ -27,12 +27,12 @@
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/ChornaIryna/Lexicon.API.Tournament.git](https://github.com/ChornaIryna/Lexicon.API.Tournament.git)
+    git clone https://github.com/ChornaIryna/Lexicon.API.Tournament.git
     cd Lexicon.API.Tournament
     ```
 
 2.  **Update Configuration Settings:**
-    Open `appsettings.json` (or `appsettings.Development.json`) in Tournament.API and Tournament.Tests  and configure your database connection string and JwT:
+    Open `appsettings.json` (or `appsettings.Development.json`) or manage `secrets.json` in Tournament.API and Tournament.Tests  and configure your database connection string and JwT:
     ```json
     "ConnectionStrings": {
       "TournamentContext": "Server=(localdb)\\mssqllocaldb;Database=TournamentDb;Trusted_Connection=True;MultipleActiveResultSets=true"
