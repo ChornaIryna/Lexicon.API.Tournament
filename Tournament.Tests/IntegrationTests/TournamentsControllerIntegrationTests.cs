@@ -8,17 +8,8 @@ using Tournament.Shared.Responses;
 
 namespace Tournament.Tests.IntegrationTests;
 
-public class TournamentsControllerIntegrationTests : IClassFixture<CustomWebApplicationFactory<Program>>
+public class TournamentsControllerIntegrationTests(CustomWebApplicationFactory factory) : IIntegrationTest(factory)
 {
-    private readonly HttpClient _client;
-    private readonly CustomWebApplicationFactory<Program> _factory;
-
-    public TournamentsControllerIntegrationTests(CustomWebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-        _client = _factory.CreateClient();
-    }
-
     [Fact]
     public async Task GetTournamentDetails_WhenUserNotAuthenticated_ReturnsUnauthorized()
     {

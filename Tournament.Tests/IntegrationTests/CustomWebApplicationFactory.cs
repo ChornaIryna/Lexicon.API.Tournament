@@ -12,7 +12,7 @@ using System.Text;
 using Tournament.Data.Data;
 
 namespace Tournament.Tests.IntegrationTests;
-public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram> where TProgram : class
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -23,7 +23,7 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
                   .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                   .AddEnvironmentVariables();
             config.AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
-            config.AddUserSecrets(typeof(CustomWebApplicationFactory<TProgram>).Assembly);
+            config.AddUserSecrets(typeof(CustomWebApplicationFactory).Assembly);
         });
 
         builder.ConfigureTestServices(services =>

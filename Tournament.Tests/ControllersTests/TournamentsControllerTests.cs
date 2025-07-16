@@ -1,32 +1,21 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Service.Contracts.Interfaces;
 using Tournament.Presentation.Controllers;
 using Tournament.Shared.DTOs;
 using Tournament.Shared.Responses;
 using Tournament.Tests.Helpers;
+using Tournament.Tests.TestFixtures;
 
 namespace Tournament.Tests.ControllersTests;
-public class TournamentsControllerTests
+public class TournamentsControllerTests : IClassFixture<TournamentControllerFixture>
 {
-    private readonly Mock<IServiceManager> _mockServiceManager;
-    private readonly Mock<ITournamentService> _mockTournamentService;
-    private readonly TournamentsController _controller;
+    private readonly TournamentControllerFixture fixture;
 
-    public TournamentsControllerTests()
+    public TournamentsControllerTests(TournamentControllerFixture fixture)
     {
-        _mockServiceManager = new Mock<IServiceManager>();
-        _mockTournamentService = new Mock<ITournamentService>();
-
-        _mockServiceManager.Setup(sm => sm.TournamentService).Returns(_mockTournamentService.Object);
-
-        _controller = new TournamentsController(_mockServiceManager.Object);
-
-        _controller.ControllerContext = new ControllerContext()
-        {
-            HttpContext = new DefaultHttpContext()
-        };
+        this.fixture = fixture;
+        fixture.Dispose();
     }
 
     [Fact]
@@ -41,17 +30,17 @@ public class TournamentsControllerTests
             Message = "No tournaments found"
         };
 
-        _mockTournamentService.Setup(s => s.GetAllAsync(queryParameters, false))
+        fixture.MockTournamentService.Setup(s => s.GetAllAsync(queryParameters, false))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.GetTournaments(queryParameters, false);
+        var result = await fixture.Controller.GetTournaments(queryParameters, false);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<IEnumerable<TournamentDto>>>(result);
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult.Result);
         Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
-        _mockTournamentService.Verify(s => s.GetAllAsync(queryParameters, false), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.GetAllAsync(queryParameters, false), Times.Once);
     }
 
     [Fact]
@@ -69,18 +58,18 @@ public class TournamentsControllerTests
             MetaData = new { TotalCount = 3, CurrentPage = 1, NumberOfEntitiesOnPage = 10, TotalPages = 1 }
         };
 
-        _mockTournamentService.Setup(s => s.GetAllAsync(queryParameters, false))
+        fixture.MockTournamentService.Setup(s => s.GetAllAsync(queryParameters, false))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.GetTournaments(queryParameters, false);
+        var result = await fixture.Controller.GetTournaments(queryParameters, false);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<IEnumerable<TournamentDto>>>(result);
         var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
         var returnValue = Assert.IsAssignableFrom<IEnumerable<TournamentDto>>(okResult.Value);
-        Assert.Equal(3, System.Linq.Enumerable.Count(returnValue));
-        _mockTournamentService.Verify(s => s.GetAllAsync(queryParameters, false), Times.Once);
+        Assert.Equal(3, Enumerable.Count(returnValue));
+        fixture.MockTournamentService.Verify(s => s.GetAllAsync(queryParameters, false), Times.Once);
     }
 
     [Fact]
@@ -97,18 +86,18 @@ public class TournamentsControllerTests
             Message = "Tournament retrieved successfully"
         };
 
-        _mockTournamentService.Setup(s => s.GetByIdAsync(tournamentId, false))
+        fixture.MockTournamentService.Setup(s => s.GetByIdAsync(tournamentId, false))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.GetTournamentDetails(tournamentId, false);
+        var result = await fixture.Controller.GetTournamentDetails(tournamentId, false);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<TournamentDto>>(result);
         var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
         var returnValue = Assert.IsType<TournamentDto>(okResult.Value);
         Assert.Equal(tournamentDto.Title, returnValue.Title);
-        _mockTournamentService.Verify(s => s.GetByIdAsync(tournamentId, false), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.GetByIdAsync(tournamentId, false), Times.Once);
 
     }
 
@@ -124,17 +113,17 @@ public class TournamentsControllerTests
             Message = $"Tournament with id '{tournamentId}' was not found"
         };
 
-        _mockTournamentService.Setup(s => s.GetByIdAsync(tournamentId, false))
+        fixture.MockTournamentService.Setup(s => s.GetByIdAsync(tournamentId, false))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.GetTournamentDetails(tournamentId, false);
+        var result = await fixture.Controller.GetTournamentDetails(tournamentId, false);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<TournamentDto>>(result);
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult.Result);
         Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
-        _mockTournamentService.Verify(s => s.GetByIdAsync(tournamentId, false), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.GetByIdAsync(tournamentId, false), Times.Once);
     }
 
     [Fact]
@@ -150,16 +139,16 @@ public class TournamentsControllerTests
             Message = "Tournament updated successfully"
         };
 
-        _mockTournamentService.Setup(s => s.UpdateAsync(tournamentId, tournamentEditDto))
+        fixture.MockTournamentService.Setup(s => s.UpdateAsync(tournamentId, tournamentEditDto))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.PutTournamentDetails(tournamentId, tournamentEditDto);
+        var result = await fixture.Controller.PutTournamentDetails(tournamentId, tournamentEditDto);
 
         // Assert
         var noContentResult = Assert.IsType<NoContentResult>(result);
         Assert.Equal(StatusCodes.Status204NoContent, noContentResult.StatusCode);
-        _mockTournamentService.Verify(s => s.UpdateAsync(tournamentId, tournamentEditDto), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.UpdateAsync(tournamentId, tournamentEditDto), Times.Once);
     }
 
     [Fact]
@@ -174,16 +163,16 @@ public class TournamentsControllerTests
             Message = "Invalid tournament ID"
         };
 
-        _mockTournamentService.Setup(s => s.UpdateAsync(tournamentId, tournamentEditDto))
+        fixture.MockTournamentService.Setup(s => s.UpdateAsync(tournamentId, tournamentEditDto))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.PutTournamentDetails(tournamentId, tournamentEditDto);
+        var result = await fixture.Controller.PutTournamentDetails(tournamentId, tournamentEditDto);
 
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status400BadRequest, statusCodeResult.StatusCode);
-        _mockTournamentService.Verify(s => s.UpdateAsync(tournamentId, tournamentEditDto), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.UpdateAsync(tournamentId, tournamentEditDto), Times.Once);
     }
 
     [Fact]
@@ -205,18 +194,18 @@ public class TournamentsControllerTests
             Message = "Tournament created successfully"
         };
 
-        _mockTournamentService.Setup(s => s.CreateAsync(tournamentCreateDto))
+        fixture.MockTournamentService.Setup(s => s.CreateAsync(tournamentCreateDto))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.PostTournamentDetails(tournamentCreateDto);
+        var result = await fixture.Controller.PostTournamentDetails(tournamentCreateDto);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<TournamentDto>>(result);
         var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
         Assert.Equal(nameof(TournamentsController.GetTournaments), createdAtActionResult.ActionName);
         Assert.Equal(createdTournamentDto, createdAtActionResult.Value);
-        _mockTournamentService.Verify(s => s.CreateAsync(tournamentCreateDto), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.CreateAsync(tournamentCreateDto), Times.Once);
 
     }
 
@@ -233,17 +222,17 @@ public class TournamentsControllerTests
             Errors = new List<string> { "The Title field is required." }
         };
 
-        _mockTournamentService.Setup(s => s.CreateAsync(tournamentCreateDto))
+        fixture.MockTournamentService.Setup(s => s.CreateAsync(tournamentCreateDto))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.PostTournamentDetails(tournamentCreateDto);
+        var result = await fixture.Controller.PostTournamentDetails(tournamentCreateDto);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<TournamentDto>>(result);
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, statusCodeResult.StatusCode);
-        _mockTournamentService.Verify(s => s.CreateAsync(tournamentCreateDto), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.CreateAsync(tournamentCreateDto), Times.Once);
 
     }
 
@@ -260,16 +249,16 @@ public class TournamentsControllerTests
             Message = "Tournament deleted successfully"
         };
 
-        _mockTournamentService.Setup(s => s.DeleteAsync(tournamentId))
+        fixture.MockTournamentService.Setup(s => s.DeleteAsync(tournamentId))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.DeleteTournamentDetails(tournamentId);
+        var result = await fixture.Controller.DeleteTournamentDetails(tournamentId);
 
         // Assert
         var noContentResult = Assert.IsType<NoContentResult>(result);
         Assert.Equal(StatusCodes.Status204NoContent, noContentResult.StatusCode);
-        _mockTournamentService.Verify(s => s.DeleteAsync(tournamentId), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.DeleteAsync(tournamentId), Times.Once);
     }
 
     [Fact]
@@ -284,16 +273,16 @@ public class TournamentsControllerTests
             Message = $"Tournament with id '{tournamentId}' was not found"
         };
 
-        _mockTournamentService.Setup(s => s.DeleteAsync(tournamentId))
+        fixture.MockTournamentService.Setup(s => s.DeleteAsync(tournamentId))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.DeleteTournamentDetails(tournamentId);
+        var result = await fixture.Controller.DeleteTournamentDetails(tournamentId);
 
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
-        _mockTournamentService.Verify(s => s.DeleteAsync(tournamentId), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.DeleteAsync(tournamentId), Times.Once);
     }
 
     [Fact]
@@ -310,16 +299,16 @@ public class TournamentsControllerTests
             Message = "Tournament updated successfully"
         };
 
-        _mockTournamentService.Setup(s => s.UpdateAsync(tournamentId, patchDoc))
+        fixture.MockTournamentService.Setup(s => s.UpdateAsync(tournamentId, patchDoc))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.PatchTournamentDetails(tournamentId, patchDoc);
+        var result = await fixture.Controller.PatchTournamentDetails(tournamentId, patchDoc);
 
         // Assert
         var okObjectResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(StatusCodes.Status200OK, okObjectResult.StatusCode);
-        _mockTournamentService.Verify(s => s.UpdateAsync(tournamentId, patchDoc), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.UpdateAsync(tournamentId, patchDoc), Times.Once);
     }
 
     [Fact]
@@ -335,15 +324,15 @@ public class TournamentsControllerTests
             Message = $"Tournament with id '{tournamentId}' was not found"
         };
 
-        _mockTournamentService.Setup(s => s.UpdateAsync(tournamentId, patchDoc))
+        fixture.MockTournamentService.Setup(s => s.UpdateAsync(tournamentId, patchDoc))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.PatchTournamentDetails(tournamentId, patchDoc);
+        var result = await fixture.Controller.PatchTournamentDetails(tournamentId, patchDoc);
 
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
-        _mockTournamentService.Verify(s => s.UpdateAsync(tournamentId, patchDoc), Times.Once);
+        fixture.MockTournamentService.Verify(s => s.UpdateAsync(tournamentId, patchDoc), Times.Once);
     }
 }

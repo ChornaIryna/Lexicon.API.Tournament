@@ -1,34 +1,23 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Service.Contracts.Interfaces;
 using Tournament.Core.Entities;
 using Tournament.Presentation.Controllers;
 using Tournament.Shared.DTOs;
 using Tournament.Shared.Responses;
 using Tournament.Tests.Helpers;
+using Tournament.Tests.TestFixtures;
 
 namespace Tournament.Tests.ControllersTests;
 
-public class GamesControllerTests
+public class GamesControllerTests : IClassFixture<GamesControllerFixture>
 {
-    private readonly Mock<IServiceManager> _mockServiceManager;
-    private readonly Mock<IGameService> _mockGameService;
-    private readonly GamesController _controller;
+    private readonly GamesControllerFixture fixture;
 
-    public GamesControllerTests()
+    public GamesControllerTests(GamesControllerFixture fixture)
     {
-        _mockServiceManager = new Mock<IServiceManager>();
-        _mockGameService = new Mock<IGameService>();
-
-        _mockServiceManager.Setup(sm => sm.GameService).Returns(_mockGameService.Object);
-
-        _controller = new GamesController(_mockServiceManager.Object);
-
-        _controller.ControllerContext = new ControllerContext()
-        {
-            HttpContext = new DefaultHttpContext()
-        };
+        this.fixture = fixture;
+        fixture.Dispose();
     }
 
     [Fact]
@@ -47,19 +36,19 @@ public class GamesControllerTests
             MetaData = new { TotalCount = 3, CurrentPage = 1, NumberOfEntitiesOnPage = 10, TotalPages = 1 }
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.GetAllAsync(tournamentId, queryParameters))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.GetGames(tournamentId, queryParameters);
+        var result = await fixture.Controller.GetGames(tournamentId, queryParameters);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<IEnumerable<GameDto>>>(result);
         var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
         var returnValue = Assert.IsAssignableFrom<IEnumerable<GameDto>>(okResult.Value);
         Assert.Equal(3, Enumerable.Count(returnValue));
-        _mockGameService.Verify(s => s.GetAllAsync(tournamentId, queryParameters), Times.Once);
+        fixture.MockGameService.Verify(s => s.GetAllAsync(tournamentId, queryParameters), Times.Once);
     }
 
     [Fact]
@@ -75,18 +64,18 @@ public class GamesControllerTests
             Message = "No games found"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.GetAllAsync(tournamentId, queryParameters))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.GetGames(tournamentId, queryParameters);
+        var result = await fixture.Controller.GetGames(tournamentId, queryParameters);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<IEnumerable<GameDto>>>(result);
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult.Result);
         Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
-        _mockGameService.Verify(s => s.GetAllAsync(tournamentId, queryParameters), Times.Once);
+        fixture.MockGameService.Verify(s => s.GetAllAsync(tournamentId, queryParameters), Times.Once);
     }
 
     [Fact]
@@ -104,19 +93,19 @@ public class GamesControllerTests
             Message = "Game retrieved successfully"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.GetByIdAsync(tournamentId, gameId))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.GetGame(tournamentId, gameId);
+        var result = await fixture.Controller.GetGame(tournamentId, gameId);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<GameDto>>(result);
         var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
         var returnValue = Assert.IsType<GameDto>(okResult.Value);
         Assert.Equal(gameDto.Title, returnValue.Title);
-        _mockGameService.Verify(s => s.GetByIdAsync(tournamentId, gameId), Times.Once);
+        fixture.MockGameService.Verify(s => s.GetByIdAsync(tournamentId, gameId), Times.Once);
     }
 
     [Fact]
@@ -132,18 +121,18 @@ public class GamesControllerTests
             Message = $"Game with id '{gameId}' was not found"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.GetByIdAsync(tournamentId, gameId))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.GetGame(tournamentId, gameId);
+        var result = await fixture.Controller.GetGame(tournamentId, gameId);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<GameDto>>(result);
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult.Result);
         Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
-        _mockGameService.Verify(s => s.GetByIdAsync(tournamentId, gameId), Times.Once);
+        fixture.MockGameService.Verify(s => s.GetByIdAsync(tournamentId, gameId), Times.Once);
     }
 
     [Fact]
@@ -162,19 +151,19 @@ public class GamesControllerTests
             Message = "Game retrieved successfully"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.GetByTitleAsync(tournamentId, gameTitle))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.GetGame(tournamentId, gameTitle);
+        var result = await fixture.Controller.GetGame(tournamentId, gameTitle);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<GameDto>>(result);
         var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
         var returnValue = Assert.IsType<GameDto>(okResult.Value);
         Assert.Equal(gameTitle, returnValue.Title);
-        _mockGameService.Verify(s => s.GetByTitleAsync(tournamentId, gameTitle), Times.Once);
+        fixture.MockGameService.Verify(s => s.GetByTitleAsync(tournamentId, gameTitle), Times.Once);
     }
 
     [Fact]
@@ -190,18 +179,18 @@ public class GamesControllerTests
             Message = $"Game with title '{gameTitle}' was not found"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.GetByTitleAsync(tournamentId, gameTitle))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.GetGame(tournamentId, gameTitle);
+        var result = await fixture.Controller.GetGame(tournamentId, gameTitle);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<GameDto>>(result);
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult.Result);
         Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
-        _mockGameService.Verify(s => s.GetByTitleAsync(tournamentId, gameTitle), Times.Once);
+        fixture.MockGameService.Verify(s => s.GetByTitleAsync(tournamentId, gameTitle), Times.Once);
     }
 
     [Fact]
@@ -218,17 +207,17 @@ public class GamesControllerTests
             Message = "Game updated successfully"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.UpdateAsync(tournamentId, gameId, gameEditDto))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.PutGame(tournamentId, gameId, gameEditDto);
+        var result = await fixture.Controller.PutGame(tournamentId, gameId, gameEditDto);
 
         // Assert
         var noContentResult = Assert.IsType<NoContentResult>(result);
         Assert.Equal(StatusCodes.Status204NoContent, noContentResult.StatusCode);
-        _mockGameService.Verify(s => s.UpdateAsync(tournamentId, gameId, gameEditDto), Times.Once);
+        fixture.MockGameService.Verify(s => s.UpdateAsync(tournamentId, gameId, gameEditDto), Times.Once);
     }
 
     [Fact]
@@ -245,17 +234,17 @@ public class GamesControllerTests
             Message = "Game ID mismatch or game does not belong to this tournament"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.UpdateAsync(tournamentId, gameId, gameEditDto))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.PutGame(tournamentId, gameId, gameEditDto);
+        var result = await fixture.Controller.PutGame(tournamentId, gameId, gameEditDto);
 
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status400BadRequest, statusCodeResult.StatusCode);
-        _mockGameService.Verify(s => s.UpdateAsync(tournamentId, gameId, gameEditDto), Times.Once);
+        fixture.MockGameService.Verify(s => s.UpdateAsync(tournamentId, gameId, gameEditDto), Times.Once);
     }
 
     [Fact]
@@ -274,21 +263,21 @@ public class GamesControllerTests
             MetaData = 10
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.CreateAsync(tournamentId, gameCreateDto))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.PostGames(tournamentId, gameCreateDto);
+        var result = await fixture.Controller.PostGames(tournamentId, gameCreateDto);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<Game>>(result);
         var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
         Assert.Equal(nameof(GamesController.GetGames), createdAtActionResult.ActionName);
-        Assert.Equal(tournamentId, createdAtActionResult.RouteValues["tournamentId"]);
-        Assert.Equal(10, createdAtActionResult.RouteValues["id"]);
+        Assert.Equal(tournamentId, createdAtActionResult.RouteValues?["tournamentId"]);
+        Assert.Equal(10, createdAtActionResult.RouteValues?["id"]);
         Assert.Equal(createdGameDto, createdAtActionResult.Value);
-        _mockGameService.Verify(s => s.CreateAsync(tournamentId, gameCreateDto), Times.Once);
+        fixture.MockGameService.Verify(s => s.CreateAsync(tournamentId, gameCreateDto), Times.Once);
     }
 
     [Fact]
@@ -305,18 +294,18 @@ public class GamesControllerTests
             Errors = new List<string> { "The Title field is required." }
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.CreateAsync(tournamentId, gameCreateDto))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.PostGames(tournamentId, gameCreateDto);
+        var result = await fixture.Controller.PostGames(tournamentId, gameCreateDto);
 
         // Assert
         var actionResult = Assert.IsType<ActionResult<Game>>(result);
         var statusCodeResult = Assert.IsType<ObjectResult>(actionResult.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, statusCodeResult.StatusCode);
-        _mockGameService.Verify(s => s.CreateAsync(tournamentId, gameCreateDto), Times.Once);
+        fixture.MockGameService.Verify(s => s.CreateAsync(tournamentId, gameCreateDto), Times.Once);
     }
 
     [Fact]
@@ -334,17 +323,17 @@ public class GamesControllerTests
             Message = "Game patched successfully"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.UpdateAsync(tournamentId, gameId, patchDoc))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.PatchGame(tournamentId, gameId, patchDoc);
+        var result = await fixture.Controller.PatchGame(tournamentId, gameId, patchDoc);
 
         // Assert
         var okObjectResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(StatusCodes.Status200OK, okObjectResult.StatusCode);
-        _mockGameService.Verify(s => s.UpdateAsync(tournamentId, gameId, patchDoc), Times.Once);
+        fixture.MockGameService.Verify(s => s.UpdateAsync(tournamentId, gameId, patchDoc), Times.Once);
     }
 
     [Fact]
@@ -361,17 +350,17 @@ public class GamesControllerTests
             Message = $"Game with id '{gameId}' was not found"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.UpdateAsync(tournamentId, gameId, patchDoc))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.PatchGame(tournamentId, gameId, patchDoc);
+        var result = await fixture.Controller.PatchGame(tournamentId, gameId, patchDoc);
 
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
-        _mockGameService.Verify(s => s.UpdateAsync(tournamentId, gameId, patchDoc), Times.Once);
+        fixture.MockGameService.Verify(s => s.UpdateAsync(tournamentId, gameId, patchDoc), Times.Once);
     }
 
     [Fact]
@@ -387,17 +376,17 @@ public class GamesControllerTests
             Message = "Game deleted successfully"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.DeleteAsync(tournamentId, gameId))
             .ReturnsAsync(successResponse);
 
         // Act
-        var result = await _controller.DeleteGames(tournamentId, gameId);
+        var result = await fixture.Controller.DeleteGames(tournamentId, gameId);
 
         // Assert
         var noContentResult = Assert.IsType<NoContentResult>(result);
         Assert.Equal(StatusCodes.Status204NoContent, noContentResult.StatusCode);
-        _mockGameService.Verify(s => s.DeleteAsync(tournamentId, gameId), Times.Once);
+        fixture.MockGameService.Verify(s => s.DeleteAsync(tournamentId, gameId), Times.Once);
     }
 
     [Fact]
@@ -413,16 +402,16 @@ public class GamesControllerTests
             Message = $"Game with id '{gameId}' was not found"
         };
 
-        _mockGameService
+        fixture.MockGameService
             .Setup(s => s.DeleteAsync(tournamentId, gameId))
             .ReturnsAsync(errorResponse);
 
         // Act
-        var result = await _controller.DeleteGames(tournamentId, gameId);
+        var result = await fixture.Controller.DeleteGames(tournamentId, gameId);
 
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
-        _mockGameService.Verify(s => s.DeleteAsync(tournamentId, gameId), Times.Once);
+        fixture.MockGameService.Verify(s => s.DeleteAsync(tournamentId, gameId), Times.Once);
     }
 }
