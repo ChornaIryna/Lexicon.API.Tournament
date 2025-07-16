@@ -19,9 +19,11 @@ public class TournamentControllerFixture : IDisposable
         Controller = new TournamentsController(MockServiceManager.Object);
         Controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
     }
-    public void Dispose()
+    public void Clear()
     {
         MockServiceManager.Invocations.Clear();
         MockTournamentService.Invocations.Clear();
     }
+
+    public void Dispose() { }
 }

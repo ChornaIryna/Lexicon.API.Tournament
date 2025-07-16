@@ -4,7 +4,7 @@ using Moq;
 using Tournament.Presentation.Controllers;
 using Tournament.Shared.DTOs;
 using Tournament.Shared.Responses;
-using Tournament.Tests.Helpers;
+using Tournament.Tests.Data;
 using Tournament.Tests.TestFixtures;
 
 namespace Tournament.Tests.ControllersTests;
@@ -15,7 +15,7 @@ public class TournamentsControllerTests : IClassFixture<TournamentControllerFixt
     public TournamentsControllerTests(TournamentControllerFixture fixture)
     {
         this.fixture = fixture;
-        fixture.Dispose();
+        fixture.Clear();
     }
 
     [Fact]
