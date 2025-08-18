@@ -14,7 +14,11 @@ public static class ServiceExtensions
 {
     public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
-        services.AddControllers(option => option.ReturnHttpNotAcceptable = true)
+        services.AddControllers(option =>
+        {
+            option.ReturnHttpNotAcceptable = true;
+            option.Filters.Add(new ProducesAttribute("application/json"));
+        })
                 .AddNewtonsoftJson()
                 .AddXmlDataContractSerializerFormatters()
                 .AddApplicationPart(typeof(AssemblyReference).Assembly);
