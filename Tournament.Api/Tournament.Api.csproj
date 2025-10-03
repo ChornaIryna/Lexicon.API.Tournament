@@ -22,8 +22,4 @@
     <ProjectReference Include="..\Tournament.Presentation\Tournament.Presentation.csproj" />
   </ItemGroup>
 
-	<PropertyGroup>
-		<IsPublishable>false</IsPublishable>
-	</PropertyGroup>
-
 </Project>

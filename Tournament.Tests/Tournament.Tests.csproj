@@ -7,6 +7,7 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+		<IsPublishable>false</IsPublishable>
     <Configurations>Debug;Release;Test</Configurations>
     <UserSecretsId>ac969885-8eaa-4edd-ab78-0aad258c6402</UserSecretsId>
   </PropertyGroup>
